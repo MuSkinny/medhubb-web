@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/marco/Downloads/**)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx tsc:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(del \"src\\app\\api\\debug\\connections\\route.ts\")",
+      "Bash(del:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

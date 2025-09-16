@@ -1,8 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
+  --success: 142.1 76.2% 36.3%;
+  --success-foreground: 138.5 76.5% 96.7%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 84% 4.9%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 224.3 76.3% 94.0%;
+  --success: 142.1 76.2% 36.3%;
+  --success-foreground: 138.5 76.5% 96.7%;
 }
 
 @theme inline {
@@ -14,13 +59,203 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--bg-blue-600-dark);
+    --foreground: var(--text-primary-dark);
   }
 }
 
+* {
+  border-color: hsl(var(--border));
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* shadcn/ui Base Layer */
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    @apply bg-white text-gray-900;
+  }
+}
+
+
+/* Card Component */
+.card {
+  @apply rounded-lg border bg-white text-gray-900 shadow-sm;
+}
+
+.card-header {
+  @apply flex flex-col space-y-1.5 p-6;
+}
+
+.card-title {
+  @apply text-2xl font-semibold leading-none tracking-tight;
+}
+
+.card-description {
+  @apply text-sm text-gray-600;
+}
+
+.card-content {
+  @apply p-6 pt-0;
+}
+
+.card-footer {
+  @apply flex items-center p-6 pt-0;
+}
+
+/* Button Component */
+.btn {
+  @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+}
+
+.btn-default {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+  height: 2.5rem;
+  padding: 0 1rem;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200;
+  height: 2.5rem;
+  padding: 0 1rem;
+}
+
+.btn-ghost {
+  @apply hover:bg-gray-100 hover:text-gray-900;
+  height: 2.5rem;
+  padding: 0 1rem;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700;
+  height: 2.5rem;
+  padding: 0 1rem;
+}
+
+.btn-sm {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  @apply text-xs;
+}
+
+.btn-lg {
+  height: 2.75rem;
+  padding: 0 2rem;
+}
+
+/* Badge Component */
+.badge {
+  @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.badge-default {
+  @apply border-transparent bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.badge-secondary {
+  @apply border-transparent bg-gray-100 text-gray-700 hover:bg-gray-200;
+}
+
+.badge-success {
+  @apply border-transparent bg-green-600 text-white hover:bg-green-700;
+}
+
+.badge-destructive {
+  @apply border-transparent bg-red-600 text-white hover:bg-red-700;
+}
+
+.badge-outline {
+  @apply text-gray-900;
+}
+
+/* Table Component */
+.table-wrapper {
+  @apply relative w-full overflow-auto;
+}
+
+.table {
+  @apply w-full caption-bottom text-sm;
+}
+
+.table-header {
+  @apply [&_tr]:border-b;
+}
+
+.table-body {
+  @apply [&_tr:last-child]:border-0;
+}
+
+.table-footer {
+  @apply border-t bg-gray-50 font-medium [&>tr]:last:border-b-0;
+}
+
+.table-row {
+  @apply border-b transition-colors hover:bg-gray-50 data-[state=selected]:bg-gray-100;
+}
+
+.table-head {
+  @apply h-12 px-4 text-left align-middle font-medium text-gray-600 [&:has([role=checkbox])]:pr-0;
+}
+
+.table-cell {
+  @apply px-4 py-3 align-middle [&:has([role=checkbox])]:pr-0;
+}
+
+/* Input Component */
+.input {
+  @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+/* Select Component */
+.select-trigger {
+  @apply flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+/* Sidebar Layout */
+.sidebar {
+  @apply flex h-full w-64 flex-col bg-white border-r;
+}
+
+.sidebar-header {
+  @apply flex items-center px-6 py-4 border-b;
+}
+
+.sidebar-content {
+  @apply flex-1 overflow-auto py-4;
+}
+
+.sidebar-nav {
+  @apply space-y-1 px-3;
+}
+
+.sidebar-nav-item {
+  @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100 hover:text-gray-900;
+}
+
+.sidebar-nav-item.active {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+/* Main Layout */
+.main-layout {
+  @apply flex min-h-screen;
+}
+
+.main-content {
+  @apply flex-1 flex flex-col;
+}
+
+.main-header {
+  @apply border-b bg-white px-6 py-4;
+}
+
+.main-body {
+  @apply flex-1 p-6;
 }
