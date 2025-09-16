@@ -300,12 +300,11 @@ export default function PatientRegisterPage() {
             <div className="text-center">
               <Link
                 href="/"
-                className="inline-flex items-center transition-colors duration-150"
+                className="inline-flex items-center transition-colors duration-150 hover:opacity-70"
                 style={{
                   fontSize: '12px',
                   color: '#BDC3C7'
                 }}
-                className="hover:opacity-70"
               >
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>

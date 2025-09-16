@@ -6,8 +6,8 @@ import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
 
 export default function PatientDashboardPage() {
-  const [patientData, setPatientData] = useState<any>(null);
-  const [connectionStatus, setConnectionStatus] = useState<any>(null);
+  const [patientData, setPatientData] = useState<{id: string; [key: string]: unknown} | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<{status: string; [key: string]: unknown} | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -123,10 +123,10 @@ export default function PatientDashboardPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
+  // const handleLogout = async () => {
+  //   await supabase.auth.signOut();
+  //   router.push("/");
+  // };
 
   if (loading) {
     return (

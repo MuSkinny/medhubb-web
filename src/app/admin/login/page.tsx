@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
@@ -44,7 +45,7 @@ export default function AdminLoginPage() {
       // Redirect alla dashboard admin
       router.push("/admin");
 
-    } catch (err) {
+    } catch {
       setError("Errore di connessione");
       setLoading(false);
     }
@@ -131,12 +132,12 @@ export default function AdminLoginPage() {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <a
+          <Link
             href="/"
             className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
           >
             ← Torna alla home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

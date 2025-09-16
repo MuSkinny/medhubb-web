@@ -53,7 +53,7 @@ export default function AdminPage() {
 
       // Carica tutti i dottori
       fetchAllDoctors(session.token);
-    } catch (error) {
+    } catch {
       localStorage.removeItem("admin_session");
       router.push("/admin/login");
     }

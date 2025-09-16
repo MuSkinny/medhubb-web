@@ -15,7 +15,7 @@ interface PendingRequest {
 }
 
 export default function DoctorRequestsPage() {
-  const [doctorData, setDoctorData] = useState<any>(null);
+  const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string}} | null>(null);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);

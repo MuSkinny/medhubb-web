@@ -54,11 +54,11 @@ const URGENCY_LABELS = {
 };
 
 export default function PatientPrescriptions() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<{user: {id: string}; access_token: string} | null>(null);
   const [loading, setLoading] = useState(true);
   const [prescriptions, setPrescriptions] = useState<PrescriptionRequest[]>([]);
   const [connectedDoctors, setConnectedDoctors] = useState<Doctor[]>([]);
-  const [doctorInfo, setDoctorInfo] = useState<any>(null);
+  const [doctorInfo, setDoctorInfo] = useState<{id: string; first_name: string; last_name: string; email: string} | null>(null);
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionRequest | null>(null);
 
@@ -102,7 +102,7 @@ export default function PatientPrescriptions() {
     }
   };
 
-  const loadPrescriptions = async (currentSession: any) => {
+  const loadPrescriptions = async (currentSession: {user: {id: string}; access_token: string}) => {
     try {
       const response = await fetch(`/api/prescriptions?patientId=${currentSession.user.id}`, {
         headers: {
@@ -121,7 +121,7 @@ export default function PatientPrescriptions() {
     }
   };
 
-  const loadConnectedDoctors = async (currentSession: any) => {
+  const loadConnectedDoctors = async (currentSession: {user: {id: string}; access_token: string}) => {
     try {
       const response = await fetch(`/api/connections/status?patientId=${currentSession.user.id}`, {
         headers: {
@@ -214,7 +214,7 @@ export default function PatientPrescriptions() {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
           console.error('API Error Response:', errorData);
-        } catch (parseError) {
+        } catch {
           const errorText = await response.text();
           console.error('API Error (raw):', response.status, errorText);
           errorMessage = `Server error (${response.status})`;

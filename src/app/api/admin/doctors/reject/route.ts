@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     });
 
     // Update semplice e diretto
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("doctors")
       .update({ status: "rejected" })
       .eq("id", id)

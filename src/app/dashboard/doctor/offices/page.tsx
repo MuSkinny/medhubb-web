@@ -44,7 +44,7 @@ const DAYS_OF_WEEK = [
 ];
 
 export default function DoctorOfficesPage() {
-  const [doctorData, setDoctorData] = useState<any>(null);
+  const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string}} | null>(null);
   const [offices, setOffices] = useState<Office[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOfficeModal, setShowOfficeModal] = useState(false);

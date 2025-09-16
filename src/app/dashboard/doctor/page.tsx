@@ -25,7 +25,7 @@ interface Patient {
 }
 
 export default function DoctorDashboardPage() {
-  const [doctorData, setDoctorData] = useState<any>(null);
+  const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string; first_name?: string; last_name?: string}} | null>(null);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,10 +240,10 @@ export default function DoctorDashboardPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
+  // const handleLogout = async () => {
+  //   await supabase.auth.signOut();
+  //   router.push("/");
+  // };
 
   if (loading) {
     return (
@@ -589,7 +589,7 @@ export default function DoctorDashboardPage() {
                           </h4>
                           <p className="text-sm text-gray-600">{request.patient_email}</p>
                           {request.message && (
-                            <p className="text-xs text-gray-600 mt-1">"{request.message}"</p>
+                            <p className="text-xs text-gray-600 mt-1">&ldquo;{request.message}&rdquo;</p>
                           )}
                           <p className="text-xs text-gray-600 mt-1">
                             {new Date(request.created_at).toLocaleDateString('it-IT', {

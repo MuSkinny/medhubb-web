@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import Sidebar from "@/components/Sidebar";
+// import Sidebar from "@/components/Sidebar";
 
 export default function PatientDashboardPage() {
-  const [patientData, setPatientData] = useState<any>(null);
-  const [connectionStatus, setConnectionStatus] = useState<any>(null);
+  const [patientData, setPatientData] = useState<{id: string; [key: string]: unknown} | null>(null);
+  // const [connectionStatus, setConnectionStatus] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 

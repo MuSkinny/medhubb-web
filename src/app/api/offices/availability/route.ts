@@ -219,9 +219,9 @@ export async function POST(req: Request) {
 
 // Helper function to calculate available time slots
 function calculateAvailableSlots(
-  schedule: any,
-  existingAppointments: any[],
-  unavailablePeriods: any[],
+  schedule: { start_time: string; end_time: string; slot_duration: number },
+  existingAppointments: { start_time: string; end_time: string }[],
+  unavailablePeriods: { start_datetime: string; end_datetime: string }[],
   visitType: string,
   date: string
 ) {

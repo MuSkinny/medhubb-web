@@ -16,7 +16,7 @@ async function registerPatientHandler(req: NextRequest): Promise<NextResponse> {
     }
 
     // Estrai info richiesta per audit
-    const ip = req.ip || req.headers.get("x-forwarded-for") || "unknown";
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
     const userAgent = req.headers.get("user-agent") || "unknown";
 
     // 1. Prima crea l'utente auth usando supabaseAdmin

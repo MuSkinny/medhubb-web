@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { withAdminAuth } from "@/lib/middleware/auth";
 import { withRateLimit, adminRateLimit } from "@/lib/middleware/rateLimit";
 
-async function getPendingDoctorsHandler(req: NextRequest, context: any): Promise<NextResponse> {
+async function getPendingDoctorsHandler(): Promise<NextResponse> {
   try {
     const { data, error } = await supabaseAdmin
       .from("doctors")

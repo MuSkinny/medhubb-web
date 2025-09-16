@@ -15,11 +15,11 @@ interface Doctor {
 }
 
 export default function SelectDoctorPage() {
-  const [patientData, setPatientData] = useState<any>(null);
+  const [patientData, setPatientData] = useState<{id: string; profile?: {[key: string]: unknown}} | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<any>(null);
+  const [connectionStatus, setConnectionStatus] = useState<{status: string; [key: string]: unknown} | null>(null);
   const router = useRouter();
 
   useEffect(() => {

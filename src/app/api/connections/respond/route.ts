@@ -67,9 +67,10 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    const message = response === 'accepted'
-      ? "Richiesta accettata. Paziente collegato con successo."
-      : "Richiesta rifiutata.";
+    // Response message
+    // const message = response === 'accepted'
+    //   ? "Richiesta accettata. Paziente collegato con successo."
+    //   : "Richiesta rifiutata.";
 
     return NextResponse.json({
       success: true,

@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       { error: "Profilo utente non trovato" },
       { status: 404 }
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Errore interno del server" },
       { status: 500 }

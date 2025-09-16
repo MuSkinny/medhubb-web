@@ -22,7 +22,7 @@ interface InviteData {
 
 export default function InviteAcceptPage() {
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{id: string; email?: string} | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +39,7 @@ export default function InviteAcceptPage() {
 
   const checkAuth = async () => {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
         // Verifica che sia un paziente
@@ -169,7 +169,7 @@ export default function InviteAcceptPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Invito Medico</h1>
-            <p className="text-green-100 text-sm">Accetta l'invito per collegarti con il tuo medico</p>
+            <p className="text-green-100 text-sm">Accetta l&apos;invito per collegarti con il tuo medico</p>
           </div>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function InviteAcceptPage() {
               {/* Auth Status */}
               {!user ? (
                 <div className="border-t pt-6">
-                  <h4 className="font-medium text-gray-900 mb-4">Per accettare l'invito devi prima:</h4>
+                  <h4 className="font-medium text-gray-900 mb-4">Per accettare l&apos;invito devi prima:</h4>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={handleLogin}

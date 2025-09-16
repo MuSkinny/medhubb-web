@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function PendingApprovalPage() {
-  const [doctorInfo, setDoctorInfo] = useState<any>(null);
+  const [doctorInfo, setDoctorInfo] = useState<{status: string; first_name?: string; last_name?: string; email?: string} | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -266,7 +266,7 @@ export default function PendingApprovalPage() {
                 onClick={handleLogout}
                 className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
               >
-                Esci dall'Account
+                Esci dall&apos;Account
               </button>
             </div>
           </div>

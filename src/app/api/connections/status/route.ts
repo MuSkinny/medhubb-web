@@ -127,7 +127,7 @@ export async function GET(req: Request) {
 
     console.log('Status query result:', { statusData, error });
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && 'code' in error && (error as {code: string}).code !== 'PGRST116') {
       console.error('Error fetching connection:', error);
       return NextResponse.json({
         error: 'Errore nel controllo dello status'
@@ -190,14 +190,15 @@ export async function GET(req: Request) {
 
   } catch (error) {
     console.error("Connection status API error:", error);
-    console.error("Error stack:", error.stack);
+    const errorDetails = error instanceof Error ? {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    } : { message: 'Unknown error' };
+
     return NextResponse.json({
       error: "Errore server",
-      debug: {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      }
+      debug: errorDetails
     }, { status: 500 });
   }
 }

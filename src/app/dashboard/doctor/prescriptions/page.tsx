@@ -53,7 +53,7 @@ const RESPONSE_TEMPLATES = {
 };
 
 export default function DoctorPrescriptionsPage() {
-  const [doctorData, setDoctorData] = useState<any>(null);
+  const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string; [key: string]: unknown}} | null>(null);
   const [prescriptions, setPrescriptions] = useState<PrescriptionRequest[]>([]);
   const [patientNames, setPatientNames] = useState<{[key: string]: string}>({});
   const [loading, setLoading] = useState(true);
@@ -143,7 +143,7 @@ export default function DoctorPrescriptionsPage() {
         const namesMap: {[key: string]: string} = {};
 
         if (data.patients) {
-          data.patients.forEach((patient: any) => {
+          data.patients.forEach((patient: {id: string; first_name: string; last_name: string}) => {
             namesMap[patient.id] = `${patient.first_name} ${patient.last_name}`;
           });
         }

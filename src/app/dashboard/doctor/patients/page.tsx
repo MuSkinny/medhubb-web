@@ -14,7 +14,7 @@ interface Patient {
 }
 
 export default function DoctorPatientsPage() {
-  const [doctorData, setDoctorData] = useState<any>(null);
+  // const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string}} | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();

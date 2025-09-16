@@ -66,14 +66,21 @@ const VISIT_TYPE_LABELS = {
 };
 
 export default function DoctorAppointmentsPage() {
-  const [doctorData, setDoctorData] = useState<any>(null);
+  const [doctorData, setDoctorData] = useState<{
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    status: string;
+    [key: string]: unknown;
+  } | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [offices, setOffices] = useState<Office[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  });
+  // const [selectedDate, setSelectedDate] = useState(() => {
+  //   const today = new Date();
+  //   return today.toISOString().split('T')[0];
+  // });
   const [dateRange, setDateRange] = useState<'upcoming' | 'past' | 'all'>('upcoming');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
@@ -133,7 +140,13 @@ export default function DoctorAppointmentsPage() {
         return;
       }
 
-      setDoctorData({ ...user, profile: userData.profile });
+      setDoctorData({
+        id: user.id,
+        email: user.email || '',
+        first_name: userData.profile.first_name || '',
+        last_name: userData.profile.last_name || '',
+        status: userData.profile.status
+      });
       await loadOffices(user.id);
     } catch (error) {
       console.error("Errore autenticazione dottore:", error);
@@ -212,7 +225,15 @@ export default function DoctorAppointmentsPage() {
         return;
       }
 
-      const payload: any = {
+      const payload: {
+        appointmentId: string;
+        confirmedOfficeId: string;
+        action: string;
+        doctorNotes: string;
+        appointmentDate?: string;
+        startTime?: string;
+        endTime?: string;
+      } = {
         appointmentId: selectedAppointment.id,
         confirmedOfficeId: appointmentForm.confirmedOfficeId,
         action: appointmentForm.action,
@@ -432,7 +453,7 @@ export default function DoctorAppointmentsPage() {
                 </label>
                 <select
                   value={dateRange}
-                  onChange={(e) => setDateRange(e.target.value as any)}
+                  onChange={(e) => setDateRange(e.target.value as 'upcoming' | 'past' | 'all')}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="upcoming">Prossimi</option>
@@ -638,7 +659,7 @@ export default function DoctorAppointmentsPage() {
                   </label>
                   <select
                     value={appointmentForm.action}
-                    onChange={(e) => setAppointmentForm({ ...appointmentForm, action: e.target.value as any })}
+                    onChange={(e) => setAppointmentForm({ ...appointmentForm, action: e.target.value as 'confirm' | 'reschedule' | 'reject' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="confirm">Conferma</option>

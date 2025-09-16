@@ -63,7 +63,7 @@ const VISIT_TYPE_LABELS = {
 };
 
 export default function PatientAppointmentsPage() {
-  const [patientData, setPatientData] = useState<any>(null);
+  const [patientData, setPatientData] = useState<{id: string; profile?: {[key: string]: unknown}} | null>(null);
   const [connectedDoctors, setConnectedDoctors] = useState<Doctor[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [offices, setOffices] = useState<Office[]>([]);
@@ -198,7 +198,7 @@ export default function PatientAppointmentsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        const activeOffices = data.offices?.filter((o: any) => o.is_active) || [];
+        const activeOffices = data.offices?.filter((o: Office & {is_active: boolean}) => o.is_active) || [];
         setOffices(activeOffices);
 
         if (activeOffices.length === 1) {

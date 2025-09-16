@@ -14,7 +14,7 @@ export function withRateLimit(
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
       // Determina identificatore (IP di default, oppure user ID se autenticato)
-      let identifier = req.ip || req.headers.get("x-forwarded-for") || "unknown";
+      let identifier = req.headers.get("x-forwarded-for") || "unknown";
 
       if (config.identifier) {
         identifier = config.identifier(req);

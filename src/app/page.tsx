@@ -80,7 +80,7 @@ export default function Home() {
               }}
             >
               MedHubb è la piattaforma digitale che connette medici e pazienti,
-              rendendo l'assistenza sanitaria più accessibile, efficiente e personalizzata.
+              rendendo l&apos;assistenza sanitaria più accessibile, efficiente e personalizzata.
             </p>
           </div>
 

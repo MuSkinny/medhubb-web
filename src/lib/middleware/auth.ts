@@ -5,7 +5,15 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   role: "doctor" | "patient" | "admin";
-  profile: any;
+  profile: {
+    id?: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+    status?: string;
+    role?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 export interface AuthContext {
@@ -59,7 +67,7 @@ export function withAuth(
             role: "admin",
             profile: { role: "admin" },
           },
-          ip: req.ip || req.headers.get("x-forwarded-for") || "unknown",
+          ip: req.headers.get("x-forwarded-for") || "unknown",
           userAgent: req.headers.get("user-agent") || "unknown",
         };
 
@@ -78,7 +86,15 @@ export function withAuth(
 
       // Determina ruolo utente
       let role: "doctor" | "patient" | "admin" = "patient";
-      let profile: any = null;
+      let profile: {
+        id?: string;
+        email?: string;
+        first_name?: string;
+        last_name?: string;
+        status?: string;
+        role?: string;
+        [key: string]: unknown;
+      } | null = null;
 
       // Controlla se è un dottore
       const { data: doctorData } = await supabaseAdmin

@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     // Step 2: Get patient details for each connected patient
     const patientIds = connections.map(conn => conn.patient_id);
 
-    const { data: patientsData, error: patientsError } = await supabase
+    const { data: patientsData } = await supabase
       .from('patients')
       .select('id, first_name, last_name, email')
       .in('id', patientIds);
