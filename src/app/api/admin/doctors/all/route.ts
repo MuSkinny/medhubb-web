@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET(req: Request) {
   try {
@@ -18,6 +18,7 @@ export async function GET(req: Request) {
     }
 
     // Recupera tutti i dottori con ordinamento per data di creazione
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: doctors, error } = await supabaseAdmin
       .from("doctors")
       .select("*")
@@ -31,11 +32,15 @@ export async function GET(req: Request) {
       );
     }
 
+    if (!doctors) {
+      return NextResponse.json({ error: "Nessun dato trovato" }, { status: 404 });
+    }
+
     // Raggruppa per status
     const grouped = {
-      pending: doctors.filter(d => d.status === "pending"),
-      approved: doctors.filter(d => d.status === "approved"),
-      rejected: doctors.filter(d => d.status === "rejected"),
+      pending: doctors.filter((d: {status: string}) => d.status === "pending"),
+      approved: doctors.filter((d: {status: string}) => d.status === "approved"),
+      rejected: doctors.filter((d: {status: string}) => d.status === "rejected"),
     };
 
     return NextResponse.json({

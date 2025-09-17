@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { withAdminAuth } from "@/lib/middleware/auth";
 import { withRateLimit, adminRateLimit } from "@/lib/middleware/rateLimit";
 
 async function getPendingDoctorsHandler(): Promise<NextResponse> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from("doctors")
       .select("id, email, first_name, last_name, order_number, created_at")

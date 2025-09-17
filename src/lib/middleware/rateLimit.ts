@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "../supabaseAdmin";
+import { getSupabaseAdmin } from "../supabaseAdmin";
 
 interface RateLimitConfig {
   maxRequests: number;
@@ -13,6 +13,7 @@ export function withRateLimit(
 ) {
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
+      const supabaseAdmin = getSupabaseAdmin();
       // Determina identificatore (IP di default, oppure user ID se autenticato)
       let identifier = req.headers.get("x-forwarded-for") || "unknown";
 
@@ -23,7 +24,7 @@ export function withRateLimit(
       const actionType = `${req.method}:${req.nextUrl.pathname}`;
 
       // Verifica rate limit usando la funzione database
-      const { data: canProceed, error } = await supabaseAdmin.rpc(
+      const { data: canProceed, error } = await (supabaseAdmin.rpc as any)(
         "check_rate_limit",
         {
           p_identifier: identifier,

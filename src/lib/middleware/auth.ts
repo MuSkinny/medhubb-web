@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "../supabaseAdmin";
+import { getSupabaseAdmin } from "../supabaseAdmin";
 
 export interface AuthenticatedUser {
   id: string;
@@ -47,6 +47,7 @@ export function withAuth(
 ) {
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
+      const supabaseAdmin = getSupabaseAdmin();
       const authHeader = req.headers.get("authorization");
 
       if (!authHeader?.startsWith("Bearer ")) {

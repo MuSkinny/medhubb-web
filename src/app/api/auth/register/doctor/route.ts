@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { withRateLimit, registrationRateLimit } from "@/lib/middleware/rateLimit";
 
 async function registerDoctorHandler(req: NextRequest): Promise<NextResponse> {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const body = await req.json();
     const { email, password, first_name, last_name, order_number } = body;
 
@@ -38,7 +39,7 @@ async function registerDoctorHandler(req: NextRequest): Promise<NextResponse> {
     }
 
     // 2. Usa la funzione database sicura per inserire il dottore
-    const { data: result, error: dbError } = await supabaseAdmin.rpc(
+    const { data: result, error: dbError } = await (supabaseAdmin.rpc as any)(
       "register_doctor",
       {
         p_user_id: authData.user.id,
