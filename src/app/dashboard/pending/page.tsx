@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function PendingApprovalPage() {
-  const [doctorInfo, setDoctorInfo] = useState<{status: string; first_name?: string; last_name?: string; email?: string} | null>(null);
+  const [doctorInfo, setDoctorInfo] = useState<{status: string; first_name?: string; last_name?: string; email?: string; order_number?: string; created_at?: string} | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -159,7 +159,7 @@ export default function PendingApprovalPage() {
                   <div className="text-sm text-blue-700 space-y-1">
                     <p><strong>Email:</strong> {doctorInfo.email}</p>
                     <p><strong>Numero Ordine:</strong> {doctorInfo.order_number}</p>
-                    <p><strong>Data Registrazione:</strong> {new Date(doctorInfo.created_at).toLocaleDateString('it-IT')}</p>
+                    <p><strong>Data Registrazione:</strong> {doctorInfo.created_at ? new Date(doctorInfo.created_at).toLocaleDateString('it-IT') : 'N/A'}</p>
                     <p><strong>Status:</strong> <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">In Attesa</span></p>
                   </div>
                 </div>

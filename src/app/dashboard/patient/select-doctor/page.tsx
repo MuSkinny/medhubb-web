@@ -19,7 +19,7 @@ export default function SelectDoctorPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<{status: string; [key: string]: unknown} | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<{status: string; pendingRequest?: {doctors: {first_name?: string; last_name?: string}}; [key: string]: unknown} | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -146,7 +146,7 @@ export default function SelectDoctorPage() {
         body: JSON.stringify({
           patientId: patientData.id,
           doctorId: doctorId,
-          message: `Richiesta di collegamento da ${patientData.profile.first_name} ${patientData.profile.last_name}`
+          message: `Richiesta di collegamento da ${patientData.profile?.first_name || ''} ${patientData.profile?.last_name || ''}`
         })
       });
 

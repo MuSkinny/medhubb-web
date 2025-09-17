@@ -1,7 +1,7 @@
 "use client";
 
 // import { ReactNode } from "react";
-import { LucideIcon } from "lucide-react";
+// import { LucideIcon } from "lucide-react";
 
 interface HealthCardProps {
   title: string;
@@ -9,7 +9,7 @@ interface HealthCardProps {
   subtitle?: string;
   trend?: 'up' | 'down' | 'neutral';
   color?: 'blue' | 'green' | 'orange';
-  icon: LucideIcon;
+  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>;
   className?: string;
 }
 

@@ -127,7 +127,7 @@ export function withAuth(
           role,
           profile,
         },
-        ip: req.ip || req.headers.get("x-forwarded-for") || "unknown",
+        ip: req.headers.get("x-forwarded-for") || "unknown",
         userAgent: req.headers.get("user-agent") || "unknown",
       };
 

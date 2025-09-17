@@ -275,7 +275,7 @@ export default function PatientPrescriptions() {
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar />
+      <Sidebar userType="patient" userName="" userEmail="" />
       <div className="flex-1 p-8">
         {/* Header */}
         <div className="mb-8">
