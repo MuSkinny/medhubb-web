@@ -25,7 +25,7 @@ interface Patient {
 }
 
 export default function DoctorDashboardPage() {
-  const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string; first_name?: string; last_name?: string}} | null>(null);
+  const [doctorData, setDoctorData] = useState<{id: string; email?: string; profile: {status: string; first_name?: string; last_name?: string}} | null>(null);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,7 +270,7 @@ export default function DoctorDashboardPage() {
       <Sidebar
         userType="doctor"
         userName={userName}
-        userEmail={doctorData.email}
+        userEmail={doctorData.email || ''}
       />
 
       <div className="main-content">

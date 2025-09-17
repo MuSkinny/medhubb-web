@@ -58,7 +58,7 @@ export default function PatientPrescriptions() {
   const [loading, setLoading] = useState(true);
   const [prescriptions, setPrescriptions] = useState<PrescriptionRequest[]>([]);
   const [connectedDoctors, setConnectedDoctors] = useState<Doctor[]>([]);
-  const [doctorInfo, setDoctorInfo] = useState<{id: string; first_name: string; last_name: string; email: string} | null>(null);
+  const [doctorInfo, setDoctorInfo] = useState<{id: string; name?: string; first_name?: string; last_name?: string; email?: string} | null>(null);
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionRequest | null>(null);
 
@@ -202,7 +202,7 @@ export default function PatientPrescriptions() {
       const response = await fetch('/api/prescriptions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session?.access_token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestData)
@@ -222,7 +222,7 @@ export default function PatientPrescriptions() {
         throw new Error(errorMessage);
       }
 
-      await loadPrescriptions(session);
+      if (session) await loadPrescriptions(session);
 
       // Reset form
       setFormData({ doctorId: '', urgency: 'normal', patientNotes: '' });
@@ -261,7 +261,7 @@ export default function PatientPrescriptions() {
   if (loading) {
     return (
       <div className="flex">
-        <Sidebar />
+        <Sidebar userType="patient" userName="" userEmail="" />
         <div className="flex-1 p-8">
           <div className="flex justify-center items-center h-64">
             <div className="text-gray-600">Caricamento...</div>

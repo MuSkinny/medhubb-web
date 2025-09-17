@@ -14,7 +14,7 @@ interface Patient {
 }
 
 export default function DoctorPatientsPage() {
-  // const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string}} | null>(null);
+  const [doctorData, setDoctorData] = useState<{id: string; email?: string; profile: {status: string}} | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -56,7 +56,11 @@ export default function DoctorPatientsPage() {
         return;
       }
 
-      setDoctorData({ ...user, profile: userData.profile });
+      setDoctorData({
+        id: user.id,
+        email: user.email || '',
+        profile: userData.profile
+      });
       await loadPatients(user.id);
     } catch (error) {
       console.error("Errore autenticazione dottore:", error);

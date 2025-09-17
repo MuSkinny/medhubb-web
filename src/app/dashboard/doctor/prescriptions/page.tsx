@@ -53,7 +53,7 @@ const RESPONSE_TEMPLATES = {
 };
 
 export default function DoctorPrescriptionsPage() {
-  const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string; [key: string]: unknown}} | null>(null);
+  const [doctorData, setDoctorData] = useState<{id: string; email?: string; profile: {status: string; first_name?: string; last_name?: string; [key: string]: unknown}} | null>(null);
   const [prescriptions, setPrescriptions] = useState<PrescriptionRequest[]>([]);
   const [patientNames, setPatientNames] = useState<{[key: string]: string}>({});
   const [loading, setLoading] = useState(true);
@@ -313,7 +313,7 @@ export default function DoctorPrescriptionsPage() {
       <Sidebar
         userType="doctor"
         userName={userName}
-        userEmail={doctorData.email}
+        userEmail={doctorData.email || ''}
       />
 
       <div className="flex-1 flex flex-col lg:ml-0">

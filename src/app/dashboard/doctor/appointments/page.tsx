@@ -45,6 +45,7 @@ interface Office {
   name: string;
   address: string;
   city: string;
+  is_active?: boolean;
 }
 
 const STATUS_LABELS = {
@@ -353,7 +354,7 @@ export default function DoctorAppointmentsPage() {
     return null;
   }
 
-  const userName = `${doctorData.profile?.first_name || ''} ${doctorData.profile?.last_name || ''}`.trim();
+  const userName = `${doctorData.first_name || ''} ${doctorData.last_name || ''}`.trim();
   const stats = getStats();
   const appointmentsByDate = getAppointmentsByDate();
 
@@ -362,7 +363,7 @@ export default function DoctorAppointmentsPage() {
       <Sidebar
         userType="doctor"
         userName={userName}
-        userEmail={doctorData.email}
+        userEmail={doctorData.email || ''}
       />
 
       <div className="flex-1 flex flex-col lg:ml-0">

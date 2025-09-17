@@ -89,7 +89,10 @@ export default function DashboardPage() {
       }
 
       // Se non è né dottore né paziente, mantieni la dashboard generica
-      setUser(user);
+      setUser({
+        ...user,
+        email: user.email || '',
+      });
       setLoading(false);
     } catch (error) {
       console.error("Errore nel controllo utente:", error);

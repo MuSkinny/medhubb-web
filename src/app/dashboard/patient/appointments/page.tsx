@@ -63,7 +63,7 @@ const VISIT_TYPE_LABELS = {
 };
 
 export default function PatientAppointmentsPage() {
-  const [patientData, setPatientData] = useState<{id: string; profile?: {[key: string]: unknown}} | null>(null);
+  const [patientData, setPatientData] = useState<{id: string; email?: string; profile?: {first_name?: string; last_name?: string; [key: string]: unknown}} | null>(null);
   const [connectedDoctors, setConnectedDoctors] = useState<Doctor[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [offices, setOffices] = useState<Office[]>([]);
@@ -430,7 +430,7 @@ export default function PatientAppointmentsPage() {
       <Sidebar
         userType="patient"
         userName={userName}
-        userEmail={patientData.email}
+        userEmail={patientData.email || ''}
       />
 
       <div className="flex-1 flex flex-col lg:ml-0">

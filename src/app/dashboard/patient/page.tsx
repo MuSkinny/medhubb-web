@@ -6,8 +6,8 @@ import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/Sidebar";
 
 export default function PatientDashboardPage() {
-  const [patientData, setPatientData] = useState<{id: string; [key: string]: unknown} | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<{status: string; [key: string]: unknown} | null>(null);
+  const [patientData, setPatientData] = useState<{id: string; email?: string; profile?: {first_name?: string; last_name?: string; [key: string]: unknown}} | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<{status: string; doctor?: {first_name?: string; last_name?: string; order_number?: string}; [key: string]: unknown} | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -153,7 +153,7 @@ export default function PatientDashboardPage() {
       <Sidebar
         userType="patient"
         userName={userName}
-        userEmail={patientData.email}
+        userEmail={patientData.email || ''}
       />
 
       <div className="main-content">

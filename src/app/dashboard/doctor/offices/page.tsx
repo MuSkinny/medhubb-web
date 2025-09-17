@@ -44,7 +44,7 @@ const DAYS_OF_WEEK = [
 ];
 
 export default function DoctorOfficesPage() {
-  const [doctorData, setDoctorData] = useState<{id: string; profile: {status: string}} | null>(null);
+  const [doctorData, setDoctorData] = useState<{id: string; email?: string; profile: {status: string}} | null>(null);
   const [offices, setOffices] = useState<Office[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOfficeModal, setShowOfficeModal] = useState(false);
@@ -180,7 +180,7 @@ export default function DoctorOfficesPage() {
         setShowOfficeModal(false);
         setEditingOffice(null);
         resetOfficeForm();
-        await loadOffices(doctorData.id);
+        if (doctorData) await loadOffices(doctorData.id);
       } else {
         alert(`Errore: ${data.error}`);
       }
@@ -224,7 +224,7 @@ export default function DoctorOfficesPage() {
         alert(data.message);
         setShowScheduleModal(false);
         resetScheduleForm();
-        await loadOffices(doctorData.id);
+        if (doctorData) await loadOffices(doctorData.id);
       } else {
         alert(`Errore: ${data.error}`);
       }
@@ -273,7 +273,7 @@ export default function DoctorOfficesPage() {
 
       if (response.ok && data.success) {
         alert(data.message);
-        await loadOffices(doctorData.id);
+        if (doctorData) await loadOffices(doctorData.id);
       } else {
         alert(`Errore: ${data.error}`);
       }
@@ -334,14 +334,14 @@ export default function DoctorOfficesPage() {
     return null;
   }
 
-  const userName = `${doctorData.profile?.first_name || ''} ${doctorData.profile?.last_name || ''}`.trim();
+  const userName = `${doctorData.id || ''}`.trim();
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar
         userType="doctor"
         userName={userName}
-        userEmail={doctorData.email}
+        userEmail={doctorData.email || ''}
       />
 
       <div className="flex-1 flex flex-col lg:ml-0">

@@ -22,7 +22,7 @@ interface InviteData {
 
 export default function InviteAcceptPage() {
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
-  const [user, setUser] = useState<{id: string; email?: string} | null>(null);
+  const [user, setUser] = useState<{id: string; email?: string; profile?: {first_name?: string; last_name?: string; [key: string]: unknown}} | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
