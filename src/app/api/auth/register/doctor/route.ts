@@ -39,7 +39,8 @@ async function registerDoctorHandler(req: NextRequest): Promise<NextResponse> {
     }
 
     // 2. Usa la funzione database sicura per inserire il dottore
-    const { data: result, error: dbError } = await (supabaseAdmin.rpc as any)(
+    const rpcCall = supabaseAdmin.rpc as unknown as (name: string, params: Record<string, unknown>) => Promise<{ data: { success: boolean; message?: string; error?: string } | null; error: Error | null }>;
+    const { data: result, error: dbError } = await rpcCall(
       "register_doctor",
       {
         p_user_id: authData.user.id,
