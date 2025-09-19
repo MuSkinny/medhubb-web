@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
+import { sendEmail, getApprovalEmailTemplate } from '@/lib/emailService';
 
 export async function POST(req: Request) {
   try {
@@ -33,19 +34,47 @@ export async function POST(req: Request) {
       }
     });
 
-    // Update semplice e diretto
-    const { error } = await supabase
+    // Prima recuperiamo i dati del medico
+    const { data: doctor, error: fetchError } = await supabase
+      .from("doctors")
+      .select("id, email, first_name, last_name")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !doctor) {
+      console.error("Errore recupero medico:", fetchError);
+      return NextResponse.json({ error: "Medico non trovato" }, { status: 404 });
+    }
+
+    // Update dello status
+    const { error: updateError } = await supabase
       .from("doctors")
       .update({ status: "approved" })
-      .eq("id", id)
-      .select();
+      .eq("id", id);
 
-    if (error) {
-      console.error("Database error:", error);
+    if (updateError) {
+      console.error("Database error:", updateError);
       return NextResponse.json({ error: "Errore database" }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, message: "Medico approvato" });
+    // Inviamo l'email di conferma
+    try {
+      await sendEmail({
+        to: doctor.email,
+        subject: "🎉 La tua richiesta su MedHub è stata approvata!",
+        html: getApprovalEmailTemplate(`${doctor.first_name} ${doctor.last_name}`)
+      });
+      console.log(`Email di approvazione inviata a ${doctor.email}`);
+    } catch (emailError) {
+      console.error("Errore invio email:", emailError);
+      // Non blocchiamo l'operazione se l'email fallisce
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Medico approvato e email inviata",
+      doctor: { id: doctor.id, email: doctor.email, name: `${doctor.first_name} ${doctor.last_name}` }
+    });
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Errore server" }, { status: 500 });

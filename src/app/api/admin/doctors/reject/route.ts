@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from '@supabase/supabase-js';
+import { sendEmail, getRejectionEmailTemplate } from '@/lib/emailService';
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { id } = body;
+    const { id, reason } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID del dottore è obbligatorio" }, { status: 400 });
@@ -33,19 +34,47 @@ export async function POST(req: Request) {
       }
     });
 
-    // Update semplice e diretto
-    const { error } = await supabase
+    // Prima recuperiamo i dati del medico
+    const { data: doctor, error: fetchError } = await supabase
+      .from("doctors")
+      .select("id, email, first_name, last_name")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !doctor) {
+      console.error("Errore recupero medico:", fetchError);
+      return NextResponse.json({ error: "Medico non trovato" }, { status: 404 });
+    }
+
+    // Update dello status
+    const { error: updateError } = await supabase
       .from("doctors")
       .update({ status: "rejected" })
-      .eq("id", id)
-      .select();
+      .eq("id", id);
 
-    if (error) {
-      console.error("Database error:", error);
+    if (updateError) {
+      console.error("Database error:", updateError);
       return NextResponse.json({ error: "Errore database" }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, message: "Medico rifiutato" });
+    // Inviamo l'email di rifiuto
+    try {
+      await sendEmail({
+        to: doctor.email,
+        subject: "Aggiornamento sulla tua richiesta MedHub",
+        html: getRejectionEmailTemplate(`${doctor.first_name} ${doctor.last_name}`, reason)
+      });
+      console.log(`Email di rifiuto inviata a ${doctor.email}`);
+    } catch (emailError) {
+      console.error("Errore invio email:", emailError);
+      // Non blocchiamo l'operazione se l'email fallisce
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Medico rifiutato e email inviata",
+      doctor: { id: doctor.id, email: doctor.email, name: `${doctor.first_name} ${doctor.last_name}` }
+    });
   } catch (error) {
     console.error("API error:", error);
     return NextResponse.json({ error: "Errore server" }, { status: 500 });

@@ -9,7 +9,10 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(del \"src\\app\\api\\debug\\connections\\route.ts\")",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

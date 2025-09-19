@@ -24,16 +24,13 @@ export function withRateLimit(
       const actionType = `${req.method}:${req.nextUrl.pathname}`;
 
       // Verifica rate limit usando la funzione database
-      const rpcCall = supabaseAdmin.rpc as unknown as (name: string, params: Record<string, unknown>) => Promise<{ data: boolean; error: Error | null }>;
-      const { data: canProceed, error } = await rpcCall(
-        "check_rate_limit",
-        {
+      const { data: canProceed, error } = await supabaseAdmin
+        .rpc("check_rate_limit", {
           p_identifier: identifier,
           p_action_type: actionType,
           p_max_requests: config.maxRequests,
           p_window_minutes: config.windowMinutes,
-        }
-      );
+        });
 
       if (error) {
         console.error("Rate limit check error:", error);

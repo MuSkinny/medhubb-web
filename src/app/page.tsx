@@ -2,9 +2,9 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
       {/* Header - Topbar */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-blue-100 animate-fade-in">
+      <header className="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-slate-200/50 animate-fade-in shadow-sm">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
             <div className="flex items-center space-x-4">
@@ -25,7 +25,7 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <Link
                 href="/login"
-                className="healthcare-button primary shadow-lg"
+                className="medical-btn medical-btn-primary shadow-lg"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
@@ -71,7 +71,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link
                   href="/register/patient"
-                  className="healthcare-button secondary text-lg px-8 py-4 shadow-xl"
+                  className="medical-btn medical-btn-secondary text-lg px-8 py-4 shadow-xl"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -80,7 +80,7 @@ export default function Home() {
                 </Link>
                 <Link
                   href="/register/doctor"
-                  className="healthcare-button primary text-lg px-8 py-4 shadow-xl"
+                  className="medical-btn medical-btn-primary text-lg px-8 py-4 shadow-xl"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 919.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM9 9a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -94,7 +94,7 @@ export default function Home() {
             <div className="relative animate-fade-in" style={{animationDelay: '0.3s'}}>
               <div className="relative mx-auto max-w-lg">
                 {/* Main Card */}
-                <div className="healthcare-card p-8 shadow-2xl bg-white/90 backdrop-blur-sm">
+                <div className="medical-card-elevated p-8 shadow-2xl bg-white/95 backdrop-blur-sm">
                   <div className="text-center">
                     <div className="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-green-500 shadow-lg">
                       <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -189,7 +189,7 @@ export default function Home() {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="group healthcare-card text-center hover:scale-105 transition-all duration-500 animate-fade-in"
+                className="group medical-card text-center hover:scale-105 transition-all duration-500 animate-fade-in"
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
                 <div className={`w-20 h-20 flex items-center justify-center mx-auto mb-6 rounded-2xl bg-gradient-to-br ${feature.gradient} shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>

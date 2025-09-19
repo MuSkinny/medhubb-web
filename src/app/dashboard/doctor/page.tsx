@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { UserProfileDropdown } from '@/components/UserProfileDropdown';
+import { CompactCalendar } from '@/components/CompactCalendar';
 import { 
   CalendarDays, 
   Clock,
@@ -52,6 +53,7 @@ export default function DoctorDashboardPage() {
   
   // Nuovo stato per tab navigation
   const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'prescriptions' | 'patients' | 'offices' | 'calendar'>('overview');
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
   
   // Stati per il nuovo design
   const [rejectReason, setRejectReason] = useState('');
@@ -502,260 +504,226 @@ Vuoi copiare il link negli appunti?`)) {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid-responsive lg:grid-cols-4 gap-6">
-              <Card className="medical-surface-elevated">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="medical-caption text-slate-700">Pazienti totali</CardTitle>
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Users className="h-4 w-4 text-blue-600" />
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="card-responsive">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pazienti totali</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-slate-900">{patients.length}</div>
-                  <p className="medical-caption text-slate-500">attivi</p>
+                <CardContent>
+                  <div className="text-2xl font-bold">{patients.length}</div>
+                  <p className="text-xs text-muted-foreground">sotto la tua cura</p>
                 </CardContent>
               </Card>
 
-              <Card className="medical-surface-elevated">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="medical-caption text-slate-700">Richieste in attesa</CardTitle>
-                  <div className="p-2 bg-amber-100 rounded-lg">
-                    <Clock className="h-4 w-4 text-amber-600" />
-                  </div>
+              <Card className="card-responsive">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Richieste in attesa</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-slate-900">{pendingRequests.length}</div>
-                  <p className="medical-caption text-slate-500">da gestire</p>
+                <CardContent>
+                  <div className="text-2xl font-bold text-amber-600">{pendingRequests.length}</div>
+                  <p className="text-xs text-muted-foreground">da gestire</p>
                 </CardContent>
               </Card>
 
-              <Card className="medical-surface-elevated">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="medical-caption text-slate-700">Appuntamenti oggi</CardTitle>
-                  <div className="p-2 bg-teal-100 rounded-lg">
-                    <CalendarDays className="h-4 w-4 text-teal-600" />
-                  </div>
+              <Card className="card-responsive">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Appuntamenti oggi</CardTitle>
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-slate-900">0</div>
-                  <p className="medical-caption text-slate-500">in programma</p>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{appointments.filter(a => a.appointment_date === new Date().toISOString().split('T')[0]).length}</div>
+                  <p className="text-xs text-muted-foreground">in programma</p>
                 </CardContent>
               </Card>
 
-              <Card className="medical-surface-elevated">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="medical-caption text-slate-700">Richieste ricette</CardTitle>
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Pill className="h-4 w-4 text-green-600" />
-                  </div>
+              <Card className="card-responsive">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Ricette in attesa</CardTitle>
+                  <Pill className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-slate-900">0</div>
-                  <p className="medical-caption text-slate-500">da gestire</p>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{prescriptions.filter(p => p.status === 'pending').length}</div>
+                  <p className="text-xs text-muted-foreground">da approvare</p>
                 </CardContent>
               </Card>
             </div>
-
-            {/* Quick Actions */}
-            <div className="space-y-6">
-              {/* Pending Requests - Priority */}
-              {pendingRequests.length > 0 && (
-                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center space-x-3">
-                      <div className="p-2 bg-red-100 rounded-lg">
-                        <Users className="h-5 w-5 text-red-600" />
+            {/* Pending Requests - Priority */}
+            {pendingRequests.length > 0 && (
+              <Card className="card-responsive border-amber-200 bg-amber-50/30">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-amber-100 rounded-lg">
+                        <Users className="h-5 w-5 text-amber-600" />
                       </div>
-                      <span className="medical-subtitle text-slate-800">Richieste di associazione</span>
-                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold">
-                        {pendingRequests.length}
-                      </span>
-                    </CardTitle>
-                    <CardDescription>Nuovi pazienti richiedono la tua approvazione</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {pendingRequests.slice(0, 3).map((request) => (
-                        <div key={request.id} className="bg-gradient-to-r from-red-50 to-red-50/50 border border-red-200 rounded-lg p-6 space-y-4 hover:shadow-md transition-shadow duration-200">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                                  <Users className="h-5 w-5 text-red-600" />
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-gray-900">
-                                    {request.patient_first_name} {request.patient_last_name}
-                                  </p>
-                                  <p className="text-sm text-red-600">Richiesta di associazione</p>
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                                <div>
-                                  <span className="font-medium text-gray-700">Email:</span>
-                                  <p className="text-gray-600">{request.patient_email}</p>
-                                </div>
-                                <div>
-                                  <span className="font-medium text-gray-700">Richiesta inviata:</span>
-                                  <p className="text-gray-600">{getRelativeDate(request.created_at)}</p>
-                                </div>
-                                {request.message && (
-                                  <div className="col-span-full">
-                                    <span className="font-medium text-gray-700">Messaggio:</span>
-                                    <p className="text-gray-600 italic">&quot;{request.message}&quot;</p>
-                                  </div>
-                                )}
-                              </div>
+                      <div>
+                        <CardTitle className="text-amber-800">Richieste in attesa</CardTitle>
+                        <CardDescription className="text-amber-700">Nuovi pazienti richiedono la tua approvazione</CardDescription>
+                      </div>
+                    </div>
+                    <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-semibold">
+                      {pendingRequests.length}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {pendingRequests.slice(0, 3).map((request) => (
+                      <div key={request.id} className="bg-white border border-amber-200 rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                              <Users className="h-5 w-5 text-amber-600" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {request.patient_first_name} {request.patient_last_name}
+                              </p>
+                              <p className="text-sm text-gray-600">{request.patient_email}</p>
+                              <p className="text-xs text-gray-500">{getRelativeDate(request.created_at)}</p>
                             </div>
                           </div>
-                          
-                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                            <Button
-                              size="sm"
-                              className="flex-1 medical-btn-success"
-                              onClick={() => handleRequestResponse(request.id, 'accepted')}
-                              disabled={processingRequest === request.id}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              {processingRequest === request.id ? 'Approvando...' : 'Approva Paziente'}
-                            </Button>
-                            <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="flex-1 border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
-                                  onClick={() => {
-                                    setRequestToReject(request.id);
-                                    setIsRejectDialogOpen(true);
-                                  }}
-                                >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Rifiuta Richiesta
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Rifiuta richiesta di associazione</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <p className="text-sm text-gray-600 mb-2">
-                                      Paziente: <strong>{request.patient_first_name} {request.patient_last_name}</strong>
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                      Email: <strong>{request.patient_email}</strong>
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      Motivo del rifiuto (opzionale)
-                                    </label>
-                    <Textarea
-                      value={rejectReason}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectReason(e.target.value)}
-                      placeholder="Spiega perché rifiuti questa richiesta..."
-                      className="min-h-[100px]"
-                    />
-                                  </div>
-                                  <div className="flex space-x-2 pt-4">
-                                    <Button
-                                      onClick={handleRejectRequest}
-                                      disabled={processingRequest === request.id}
-                                      className="flex-1 bg-red-600 hover:bg-red-700"
-                                    >
-                                      {processingRequest === request.id ? 'Rifiutando...' : 'Rifiuta richiesta'}
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => {
-                                        setIsRejectDialogOpen(false);
-                                        setRejectReason('');
-                                        setRequestToReject(null);
-                                      }}
-                                      className="flex-1"
-                                    >
-                                      Annulla
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
-              {/* Quick Actions Grid */}
-              <div className="grid-responsive-2 gap-6">
-                {/* Gestisci Pazienti */}
-                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
-                      onClick={() => setActiveTab('patients')}>
-                  <CardHeader className="text-center pb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                      <Users className="w-8 h-8 text-white" />
-                    </div>
-                    <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
-                      Gestisci Pazienti
-                    </CardTitle>
-                    <CardDescription className="group-hover:text-slate-700 transition-colors">
-                      {patients.length} pazienti sotto la tua cura
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+                        {request.message && (
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-sm text-gray-700 italic">&quot;{request.message}&quot;</p>
+                          </div>
+                        )}
 
-                {/* Appuntamenti */}
-                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
-                      onClick={() => setActiveTab('appointments')}>
-                  <CardHeader className="text-center pb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                      <Calendar className="w-8 h-8 text-white" />
-                    </div>
-                    <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
-                      Appuntamenti
-                    </CardTitle>
-                    <CardDescription className="group-hover:text-slate-700 transition-colors">
-                      Gestisci il calendario delle visite
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+                        <div className="flex space-x-3">
+                          <Button
+                            onClick={() => handleRequestResponse(request.id, 'accepted')}
+                            disabled={processingRequest === request.id}
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            {processingRequest === request.id ? 'Approvando...' : 'Approva'}
+                          </Button>
+                          <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="flex-1 border-red-300 text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                  setRequestToReject(request.id);
+                                  setIsRejectDialogOpen(true);
+                                }}
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Rifiuta
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="bg-white">
+                              <DialogHeader>
+                                <DialogTitle>Rifiuta richiesta di associazione</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    Paziente: <strong>{request.patient_first_name} {request.patient_last_name}</strong>
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    Email: <strong>{request.patient_email}</strong>
+                                  </p>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Motivo del rifiuto (opzionale)
+                                  </label>
+                                  <Textarea
+                                    value={rejectReason}
+                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectReason(e.target.value)}
+                                    placeholder="Spiega perché rifiuti questa richiesta..."
+                                    className="min-h-[100px]"
+                                  />
+                                </div>
+                                <div className="flex space-x-2 pt-4">
+                                  <Button
+                                    onClick={handleRejectRequest}
+                                    disabled={processingRequest === request.id}
+                                    className="flex-1 bg-red-600 hover:bg-red-700"
+                                  >
+                                    {processingRequest === request.id ? 'Rifiutando...' : 'Rifiuta richiesta'}
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      setIsRejectDialogOpen(false);
+                                      setRejectReason('');
+                                      setRequestToReject(null);
+                                    }}
+                                    className="flex-1"
+                                  >
+                                    Annulla
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-                {/* Ricette */}
-                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
-                      onClick={() => setActiveTab('prescriptions')}>
-                  <CardHeader className="text-center pb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                      <Pill className="w-8 h-8 text-white" />
-                    </div>
-                    <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
-                      Ricette
-                    </CardTitle>
-                    <CardDescription className="group-hover:text-slate-700 transition-colors">
-                      Gestisci le richieste di prescrizioni
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card
+                className="card-responsive cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+                onClick={() => setActiveTab('patients')}
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Users className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Gestisci Pazienti</h3>
+                  <p className="text-sm text-gray-600">{patients.length} pazienti sotto la tua cura</p>
+                </CardContent>
+              </Card>
 
-                {/* Invita Paziente */}
-                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
-                      onClick={() => setShowInviteModal(true)}>
-                  <CardHeader className="text-center pb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                      <Plus className="w-8 h-8 text-white" />
-                    </div>
-                    <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
-                      Invita Paziente
-                    </CardTitle>
-                    <CardDescription className="group-hover:text-slate-700 transition-colors">
-                      Crea un link di invito personalizzato
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
+              <Card
+                className="card-responsive cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+                onClick={() => setActiveTab('appointments')}
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-6 w-6 text-green-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Appuntamenti</h3>
+                  <p className="text-sm text-gray-600">Gestisci il calendario delle visite</p>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="card-responsive cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+                onClick={() => setActiveTab('prescriptions')}
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Pill className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Ricette</h3>
+                  <p className="text-sm text-gray-600">Gestisci le richieste di prescrizioni</p>
+                </CardContent>
+              </Card>
+
+              <Card
+                className="card-responsive cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+                onClick={() => setShowInviteModal(true)}
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Plus className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Invita Paziente</h3>
+                  <p className="text-sm text-gray-600">Crea un link di invito personalizzato</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         )}
@@ -1002,22 +970,185 @@ Vuoi copiare il link negli appunti?`)) {
         {/* Calendar Tab */}
         {activeTab === 'calendar' && (
           <div className="space-y-6">
-            <Card className="medical-surface-elevated">
-              <CardHeader>
-                <CardTitle className="medical-subtitle text-slate-800">Calendario</CardTitle>
-                <CardDescription>Vista calendario degli appuntamenti</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Vista Calendario</h3>
-                  <p className="text-gray-600 mb-4">Questa sezione mostrerà il calendario con la logica esistente</p>
-                  <p className="text-sm text-blue-600">Vista calendario integrata</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Full Calendar */}
+              <div className="lg:col-span-2">
+                <Card className="card-responsive">
+                  <CardHeader>
+                    <CardTitle>Calendario Appuntamenti</CardTitle>
+                    <CardDescription>Vista completa del tuo calendario medico</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <CompactCalendar
+                      appointments={appointments}
+                      userType="doctor"
+                      selectedDate={selectedCalendarDate}
+                      onDateSelect={setSelectedCalendarDate}
+                      className="w-full"
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Sidebar with appointments info */}
+              <div className="space-y-6">
+                {/* Today's Appointments */}
+                <Card className="card-responsive">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Appuntamenti di oggi</CardTitle>
+                    <CardDescription>
+                      {new Date().toLocaleDateString('it-IT', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long'
+                      })}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {appointments.filter(apt => {
+                      const today = new Date().toISOString().split('T')[0];
+                      return apt.appointment_date === today;
+                    }).length === 0 ? (
+                      <div className="text-center py-8">
+                        <CalendarDays className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">Nessun appuntamento oggi</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {appointments
+                          .filter(apt => {
+                            const today = new Date().toISOString().split('T')[0];
+                            return apt.appointment_date === today;
+                          })
+                          .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                          .map((appointment) => (
+                            <div key={appointment.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                              <div className="flex-shrink-0">
+                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <Clock className="h-4 w-4 text-blue-600" />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {appointment.patients?.first_name} {appointment.patients?.last_name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {appointment.start_time} - {appointment.visit_type}
+                                </p>
+                              </div>
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {appointment.status === 'confirmed' ? 'Confermato' :
+                                 appointment.status === 'pending' ? 'In attesa' :
+                                 appointment.status}
+                              </span>
+                            </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Quick Stats */}
+                <Card className="card-responsive">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Statistiche rapide</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <CalendarDays className="h-4 w-4 text-blue-600" />
+                          <span className="text-sm text-gray-600">Appuntamenti settimana</span>
+                        </div>
+                        <span className="text-sm font-semibold text-blue-600">
+                          {appointments.filter(apt => {
+                            const aptDate = new Date(apt.appointment_date);
+                            const today = new Date();
+                            const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+                            const weekEnd = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+                            return aptDate >= weekStart && aptDate <= weekEnd;
+                          }).length}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4 text-amber-600" />
+                          <span className="text-sm text-gray-600">In attesa di conferma</span>
+                        </div>
+                        <span className="text-sm font-semibold text-amber-600">
+                          {appointments.filter(apt => apt.status === 'pending').length}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4 text-green-600" />
+                          <span className="text-sm text-gray-600">Pazienti questo mese</span>
+                        </div>
+                        <span className="text-sm font-semibold text-green-600">
+                          {new Set(appointments
+                            .filter(apt => {
+                              const aptDate = new Date(apt.appointment_date);
+                              const now = new Date();
+                              return aptDate.getMonth() === now.getMonth() &&
+                                     aptDate.getFullYear() === now.getFullYear();
+                            })
+                            .map(apt => apt.patient_id)
+                          ).size}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Selected Date Appointments */}
+                {selectedCalendarDate && (
+                  <Card className="card-responsive">
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        {selectedCalendarDate.toLocaleDateString('it-IT', {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long'
+                        })}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {appointments.filter(apt => {
+                        const aptDate = new Date(apt.appointment_date);
+                        return aptDate.toDateString() === selectedCalendarDate.toDateString();
+                      }).length === 0 ? (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-gray-500">Nessun appuntamento</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {appointments
+                            .filter(apt => {
+                              const aptDate = new Date(apt.appointment_date);
+                              return aptDate.toDateString() === selectedCalendarDate.toDateString();
+                            })
+                            .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                            .map((appointment) => (
+                              <div key={appointment.id} className="p-2 border rounded text-sm">
+                                <p className="font-medium">
+                                  {appointment.start_time} - {appointment.patients?.first_name} {appointment.patients?.last_name}
+                                </p>
+                                <p className="text-gray-600">{appointment.visit_type}</p>
+                              </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

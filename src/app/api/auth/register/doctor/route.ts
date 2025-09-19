@@ -38,39 +38,56 @@ async function registerDoctorHandler(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 2. Usa la funzione database sicura per inserire il dottore
-    const rpcCall = supabaseAdmin.rpc as unknown as (name: string, params: Record<string, unknown>) => Promise<{ data: { success: boolean; message?: string; error?: string } | null; error: Error | null }>;
-    const { data: result, error: dbError } = await rpcCall(
-      "register_doctor",
-      {
-        p_user_id: authData.user.id,
-        p_email: email,
-        p_first_name: first_name,
-        p_last_name: last_name,
-        p_order_number: order_number,
-        p_ip_address: ip,
-        p_user_agent: userAgent,
-      }
-    );
+    // 2. Inserisci il dottore nella tabella doctors
+    try {
+      const { error: insertError } = await supabaseAdmin
+        .from("doctors")
+        .insert({
+          id: authData.user.id,
+          email: email,
+          first_name: first_name,
+          last_name: last_name,
+          order_number: order_number,
+          status: "pending",
+          created_at: new Date().toISOString(),
+        });
 
-    if (dbError) {
-      console.error("Database function error:", dbError);
+      if (insertError) {
+        console.error("Database insert error:", insertError);
 
-      // Rollback: elimina utente auth se funzione fallisce
-      try {
-        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      } catch (deleteError) {
-        console.error("Rollback error:", deleteError);
+        // Rollback: elimina utente auth se inserimento fallisce
+        try {
+          await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+        } catch (deleteError) {
+          console.error("Rollback error:", deleteError);
+        }
+
+        // Gestisci errori specifici
+        if (insertError.code === '23505') { // Unique constraint violation
+          return NextResponse.json(
+            { error: "Email o numero d'ordine già registrati" },
+            { status: 400 }
+          );
+        }
+
+        return NextResponse.json(
+          { error: "Errore durante la registrazione nel database" },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json(
-        { error: "Errore durante la registrazione" },
-        { status: 500 }
+        {
+          message: "Registrazione completata. In attesa di approvazione.",
+          user_id: authData.user.id,
+          success: true,
+        },
+        { status: 201 }
       );
-    }
 
-    // 3. Controlla risultato della funzione
-    if (!result?.success) {
+    } catch (insertError) {
+      console.error("Database insert error:", insertError);
+
       // Rollback: elimina utente auth
       try {
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
@@ -79,21 +96,10 @@ async function registerDoctorHandler(req: NextRequest): Promise<NextResponse> {
       }
 
       return NextResponse.json(
-        { error: result?.error || "Errore sconosciuto" },
-        { status: 400 }
+        { error: "Errore durante l'inserimento nel database" },
+        { status: 500 }
       );
     }
-
-    // L'ID è già sincronizzato tramite la funzione
-
-    return NextResponse.json(
-      {
-        message: result.message,
-        user_id: authData.user.id,
-        success: true,
-      },
-      { status: 201 }
-    );
 
   } catch (error) {
     console.error("Registration error:", error);

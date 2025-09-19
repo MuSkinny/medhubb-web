@@ -10,15 +10,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserProfileDropdown } from '@/components/UserProfileDropdown';
-import { 
-  CalendarDays, 
-  Pill, 
-  UserPlus, 
+import { CompactCalendar } from '@/components/CompactCalendar';
+import {
+  CalendarDays,
+  Pill,
+  UserPlus,
   Plus,
   Clock,
   XCircle,
   AlertCircle,
-  User
+  User,
+  Bell,
+  MapPin,
+  Phone
 } from 'lucide-react';
 
 export default function PatientDashboardPage() {
@@ -28,6 +32,7 @@ export default function PatientDashboardPage() {
   
   // Nuovo stato per tab navigation
   const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'prescriptions' | 'doctors'>('overview');
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null);
   
   // Stati per le sezioni SPA
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -422,225 +427,131 @@ export default function PatientDashboardPage() {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid-responsive lg:grid-cols-3 gap-6">
-              <Card className="medical-surface-elevated">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="medical-caption text-slate-700">Appuntamenti attivi</CardTitle>
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <CalendarDays className="h-4 w-4 text-blue-600" />
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card className="card-responsive">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Appuntamenti in attesa</CardTitle>
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-slate-900">0</div>
-                  <p className="medical-caption text-slate-500">programmati</p>
+                <CardContent>
+                  <div className="text-2xl font-bold">{appointments.filter(a => a.status === 'pending').length}</div>
+                  <p className="text-xs text-muted-foreground">da confermare</p>
                 </CardContent>
               </Card>
 
-              <Card className="medical-surface-elevated">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="medical-caption text-slate-700">Ricette attive</CardTitle>
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Pill className="h-4 w-4 text-green-600" />
-                  </div>
+              <Card className="card-responsive">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Ricette in attesa</CardTitle>
+                  <Pill className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-slate-900">0</div>
-                  <p className="medical-caption text-slate-500">da ritirare</p>
+                <CardContent>
+                  <div className="text-2xl font-bold">{prescriptions.filter(p => p.status === 'pending').length}</div>
+                  <p className="text-xs text-muted-foreground">da approvare</p>
                 </CardContent>
               </Card>
 
-              <Card className="medical-surface-elevated">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="medical-caption text-slate-700">Medico di fiducia</CardTitle>
-                  <div className="p-2 bg-teal-100 rounded-lg">
-                    <UserPlus className="h-4 w-4 text-teal-600" />
-                  </div>
+              <Card className="card-responsive">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Medici attivi</CardTitle>
+                  <UserPlus className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-slate-900">
+                <CardContent>
+                  <div className="text-2xl font-bold">
                     {connectionStatus?.status === 'connected' ? '1' : '0'}
                   </div>
-                  <p className="medical-caption text-slate-500">collegato</p>
+                  <p className="text-xs text-muted-foreground">approvati</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Status Alert */}
-            {connectionStatus && (
-              <div className="space-y-6">
-                {connectionStatus.status === 'connected' ? (
-                  <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center space-x-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <UserPlus className="h-5 w-5 text-green-600" />
-                        </div>
-                        <span className="medical-subtitle text-slate-800">Il tuo medico di fiducia</span>
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">
-                          Attivo
-                        </span>
-                      </CardTitle>
-                      <CardDescription>Medico attualmente collegato al tuo profilo</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-lg p-6 space-y-4 hover:shadow-md transition-shadow duration-200">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                <UserPlus className="h-5 w-5 text-green-600" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900">
-                                  Dr. {connectionStatus.doctor?.first_name} {connectionStatus.doctor?.last_name}
-                                </p>
-                                <p className="text-sm text-green-600">Medico di fiducia</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                          <Button
-                            size="sm"
-                            className="flex-1 medical-btn-success"
-                            onClick={() => setActiveTab('appointments')}
-                          >
-                            <CalendarDays className="h-4 w-4 mr-2" />
-                            Prenota Appuntamento
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => setActiveTab('prescriptions')}
-                          >
-                            <Pill className="h-4 w-4 mr-2" />
-                            Richiedi Ricetta
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : connectionStatus.status === 'pending' ? (
-                  <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center space-x-3">
-                        <div className="p-2 bg-amber-100 rounded-lg">
-                          <UserPlus className="h-5 w-5 text-amber-600" />
-                        </div>
-                        <span className="medical-subtitle text-slate-800">Richiesta in corso</span>
-                        <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs font-semibold">
-                          In attesa
-                        </span>
-                      </CardTitle>
-                      <CardDescription>La tua richiesta di associazione è in attesa di approvazione</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-6 text-center">
-                        <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <UserPlus className="h-6 w-6 text-amber-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-2">Richiesta inviata</h3>
-                        <p className="text-slate-600 mb-4">
-                          Il medico deve ancora approvare la tua richiesta di associazione. 
-                          Riceverai una notifica non appena sarà completata.
+            {/* Recent Activity */}
+            <Card className="card-responsive">
+              <CardHeader>
+                <CardTitle>Attività recente</CardTitle>
+                <CardDescription>I tuoi ultimi appuntamenti e ricette</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {appointments.slice(0, 3).map((appointment) => (
+                    <div key={appointment.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                      <CalendarDays className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">Appuntamento con Dr. {appointment.doctors?.first_name} {appointment.doctors?.last_name}</p>
+                        <p className="text-sm text-gray-600">
+                          {appointment.appointment_date ?
+                            new Date(appointment.appointment_date).toLocaleDateString('it-IT') :
+                            `Richiesto ${new Date(appointment.created_at || '').toLocaleDateString('it-IT')}`
+                          }
                         </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Plus className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <span className="medical-subtitle text-slate-800">Inizia il tuo percorso</span>
-                      </CardTitle>
-                      <CardDescription>Collegati a un medico per iniziare a utilizzare MedHubb</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 text-center">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <Plus className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-2">Trova il tuo medico</h3>
-                        <p className="text-slate-600 mb-4">
-                          Per utilizzare MedHubb devi essere collegato a un medico che utilizza la piattaforma.
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+                        appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                        appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {appointment.status === 'confirmed' ? 'Confermato' :
+                         appointment.status === 'pending' ? 'In attesa' :
+                         appointment.status}
+                      </span>
+                    </div>
+                  ))}
+
+                  {prescriptions.slice(0, 2).map((prescription) => (
+                    <div key={prescription.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                      <Pill className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          Ricetta: {prescription.prescription_items?.[0]?.medication_name || 'Farmaco'}
                         </p>
-                        <Button
-                          onClick={() => router.push('/dashboard/patient/select-doctor')}
-                          className="medical-btn-success"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Trova un medico
-                        </Button>
+                        <p className="text-sm text-gray-600">
+                          Dr. {prescription.doctors?.first_name} {prescription.doctors?.last_name} - {new Date(prescription.created_at || '').toLocaleDateString('it-IT')}
+                        </p>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+                        prescription.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        prescription.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {prescription.status === 'approved' ? 'Approvato' :
+                         prescription.status === 'pending' ? 'In attesa' :
+                         prescription.status === 'rejected' ? 'Rifiutato' :
+                         prescription.status}
+                      </span>
+                    </div>
+                  ))}
 
-            {/* Quick Actions Grid */}
-            <div className="grid-responsive-2 gap-6">
-              {/* Prenota Appuntamento */}
-              <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
-                    onClick={() => setActiveTab('appointments')}>
-                <CardHeader className="text-center pb-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                    <CalendarDays className="w-8 h-8 text-white" />
-                  </div>
-                  <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
-                    Prenota Appuntamento
-                  </CardTitle>
-                  <CardDescription className="group-hover:text-slate-700 transition-colors">
-                    Programma una visita con il tuo medico
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              {/* Richiedi Ricetta */}
-              <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
-                    onClick={() => setActiveTab('prescriptions')}>
-                <CardHeader className="text-center pb-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
-                    <Pill className="w-8 h-8 text-white" />
-                  </div>
-                  <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
-                    Le mie ricette
-                  </CardTitle>
-                  <CardDescription className="group-hover:text-slate-700 transition-colors">
-                    Gestisci prescrizioni e farmaci
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
+                  {appointments.length === 0 && prescriptions.length === 0 && (
+                    <div className="text-center py-8">
+                      <CalendarDays className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nessuna attività recente</p>
+                      <p className="text-sm text-gray-400 mt-1">I tuoi appuntamenti e ricette appariranno qui</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {/* Appointments Tab */}
         {activeTab === 'appointments' && (
-          <div className="space-y-6">
-            <Card className="medical-surface-elevated">
-              <CardHeader className="pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                  <div>
-                    <CardTitle className="medical-subtitle text-slate-800">I miei appuntamenti</CardTitle>
-                    <CardDescription>Visualizza e gestisci i tuoi appuntamenti medici</CardDescription>
-                  </div>
-                  <Dialog open={showBookingModal} onOpenChange={setShowBookingModal}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        className="medical-btn-success"
-                        disabled={connectedDoctors.length === 0}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Prenota Appuntamento
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-lg">
+          <Card className="card-responsive">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <div>
+                <CardTitle>I miei appuntamenti</CardTitle>
+                <CardDescription>Visualizza e gestisci i tuoi appuntamenti medici</CardDescription>
+              </div>
+              <Dialog open={showBookingModal} onOpenChange={setShowBookingModal}>
+                <DialogTrigger asChild>
+                  <Button
+                    disabled={connectedDoctors.length === 0}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Prenota Appuntamento
+                  </Button>
+                </DialogTrigger>
+                    <DialogContent className="max-w-lg bg-white">
                       <DialogHeader>
                         <DialogTitle>Prenota Appuntamento</DialogTitle>
                       </DialogHeader>
@@ -718,120 +629,67 @@ export default function PatientDashboardPage() {
                       </form>
                     </DialogContent>
                   </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {connectedDoctors.length === 0 && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
-                    <div className="flex">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
-                      <div>
-                        <h3 className="text-yellow-800 font-medium">Nessun medico collegato</h3>
-                        <p className="text-yellow-700 text-sm mt-1">
-                          Per prenotare appuntamenti devi prima collegarti a un medico.
-                        </p>
+                </CardHeader>
+                <CardContent>
+                  {connectedDoctors.length === 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+                      <div className="flex">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
+                        <div>
+                          <h3 className="text-yellow-800 font-medium">Nessun medico collegato</h3>
+                          <p className="text-yellow-700 text-sm mt-1">
+                            Per prenotare appuntamenti devi prima collegarti a un medico.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {loadingSections.appointments ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Caricamento appuntamenti...</p>
-                  </div>
-                ) : appointments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <CalendarDays className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessun appuntamento</h3>
-                    <p className="text-gray-600 mb-4">Non hai ancora prenotato nessun appuntamento.</p>
-                    {connectedDoctors.length > 0 && (
-                      <Button
-                        onClick={() => setShowBookingModal(true)}
-                        className="medical-btn-success"
-                      >
-                        Prenota il Primo Appuntamento
-                      </Button>
-                    )}
-                  </div>
-                ) : (
                   <div className="space-y-4">
-                    {appointments.map((appointment: any) => (
-                      <Card key={appointment.id} className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200">
-                        <CardContent className="p-6">
-                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                            <div className="flex-1 space-y-3">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <User className="h-5 w-5 text-blue-600" />
-                                </div>
-                                <div>
-                                  <h3 className="text-lg font-semibold text-gray-900">
-                                    Dr. {appointment.doctors?.first_name} {appointment.doctors?.last_name}
-                                  </h3>
-                                  <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                                    appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                    appointment.status === 'requested' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {appointment.status === 'confirmed' ? 'Confermato' :
-                                     appointment.status === 'requested' ? 'In Attesa' :
-                                     appointment.status}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <CalendarDays className="w-4 h-4" />
-                                  <span>
-                                    {appointment.appointment_date ? 
-                                      new Date(appointment.appointment_date).toLocaleDateString('it-IT') :
-                                      'Data da definire'
-                                    }
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <Clock className="w-4 h-4" />
-                                  <span>
-                                    {appointment.start_time ? 
-                                      `${appointment.start_time} - ${appointment.end_time}` :
-                                      'Orario da definire'
-                                    }
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <AlertCircle className="w-4 h-4" />
-                                  <span>
-                                    {appointment.visit_type === 'first_visit' ? 'Prima Visita' :
-                                     appointment.visit_type === 'follow_up' ? 'Controllo' :
-                                     appointment.visit_type === 'urgent' ? 'Urgente' :
-                                     appointment.visit_type === 'routine' ? 'Routine' :
-                                     appointment.visit_type}
-                                  </span>
-                                </div>
-                              </div>
-
+                    {loadingSections.appointments ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Caricamento appuntamenti...</p>
+                      </div>
+                    ) : appointments.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <CalendarDays className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessun appuntamento</h3>
+                        <p className="text-gray-600 mb-4">Non hai ancora prenotato nessun appuntamento.</p>
+                        {connectedDoctors.length > 0 && (
+                          <Button onClick={() => setShowBookingModal(true)}>
+                            Prenota il Primo Appuntamento
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      appointments.map((appointment: any) => (
+                        <div key={appointment.id} className="border rounded-lg p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium truncate">Dr. {appointment.doctors?.first_name} {appointment.doctors?.last_name}</h3>
+                              <p className="text-sm text-gray-600">
+                                {appointment.appointment_date ?
+                                  new Date(appointment.appointment_date).toLocaleDateString('it-IT') :
+                                  'Data da definire'
+                                }
+                              </p>
                               {appointment.patient_notes && (
-                                <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                  <span className="text-sm font-medium text-gray-700">Le tue note: </span>
-                                  <span className="text-sm text-gray-600">{appointment.patient_notes}</span>
-                                </div>
-                              )}
-
-                              {appointment.doctor_notes && (
-                                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                  <span className="text-sm font-medium text-blue-800">Note del medico: </span>
-                                  <span className="text-sm text-blue-700">{appointment.doctor_notes}</span>
-                                </div>
+                                <p className="text-sm text-gray-700 mt-1 break-words">{appointment.patient_notes}</p>
                               )}
                             </div>
-
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex items-center space-x-2 flex-shrink-0">
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {appointment.status === 'confirmed' ? 'Confermato' :
+                                 appointment.status === 'pending' ? 'In attesa' :
+                                 appointment.status}
+                              </span>
                               {appointment.status === 'requested' && (
                                 <Button
                                   variant="outline"
@@ -844,37 +702,32 @@ export default function PatientDashboardPage() {
                               )}
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                        </div>
+                      ))
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
         )}
 
         {/* Prescriptions Tab */}
         {activeTab === 'prescriptions' && (
-          <div className="space-y-6">
-            <Card className="medical-surface-elevated">
-              <CardHeader className="pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                  <div>
-                    <CardTitle className="medical-subtitle text-slate-800">Le mie ricette</CardTitle>
-                    <CardDescription>Visualizza e gestisci le tue ricette mediche</CardDescription>
-                  </div>
-                  <Dialog open={showPrescriptionModal} onOpenChange={setShowPrescriptionModal}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        className="medical-btn-success"
-                        disabled={connectedDoctors.length === 0}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Richiedi Ricetta
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <Card className="card-responsive">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <div>
+                <CardTitle>Le mie ricette</CardTitle>
+                <CardDescription>Visualizza e gestisci le tue ricette mediche</CardDescription>
+              </div>
+              <Dialog open={showPrescriptionModal} onOpenChange={setShowPrescriptionModal}>
+                <DialogTrigger asChild>
+                  <Button
+                    disabled={connectedDoctors.length === 0}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Richiedi Ricetta
+                  </Button>
+                </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
                       <DialogHeader>
                         <DialogTitle>Richiedi Ricetta</DialogTitle>
                       </DialogHeader>
@@ -1004,134 +857,79 @@ export default function PatientDashboardPage() {
                       </form>
                     </DialogContent>
                   </Dialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {connectedDoctors.length === 0 && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
-                    <div className="flex">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
-                      <div>
-                        <h3 className="text-yellow-800 font-medium">Nessun medico collegato</h3>
-                        <p className="text-yellow-700 text-sm mt-1">
-                          Per richiedere ricette devi prima collegarti a un medico.
-                        </p>
+                </CardHeader>
+                <CardContent>
+                  {connectedDoctors.length === 0 && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+                      <div className="flex">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 mr-3" />
+                        <div>
+                          <h3 className="text-yellow-800 font-medium">Nessun medico collegato</h3>
+                          <p className="text-yellow-700 text-sm mt-1">
+                            Per richiedere ricette devi prima collegarti a un medico.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {loadingSections.prescriptions ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Caricamento prescrizioni...</p>
-                  </div>
-                ) : prescriptions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Pill className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna richiesta ricetta</h3>
-                    <p className="text-gray-600 mb-4">Non hai ancora fatto richieste per ricette.</p>
-                    {connectedDoctors.length > 0 && (
-                      <Button
-                        onClick={() => setShowPrescriptionModal(true)}
-                        className="medical-btn-success"
-                      >
-                        Crea la tua prima richiesta
-                      </Button>
+                  <div className="space-y-4">
+                    {loadingSections.prescriptions ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Caricamento prescrizioni...</p>
+                      </div>
+                    ) : prescriptions.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Pill className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna richiesta ricetta</h3>
+                        <p className="text-gray-600 mb-4">Non hai ancora fatto richieste per ricette.</p>
+                        {connectedDoctors.length > 0 && (
+                          <Button onClick={() => setShowPrescriptionModal(true)}>
+                            Crea la tua prima richiesta
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      prescriptions.map((prescription: any) => (
+                        <div key={prescription.id} className="border rounded-lg p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium truncate">
+                                {prescription.prescription_items?.[0]?.medication_name || 'Farmaco'}
+                              </h3>
+                              <p className="text-sm text-gray-600">Dr. {prescription.doctors?.first_name} {prescription.doctors?.last_name}</p>
+                              <p className="text-sm text-gray-600">{new Date(prescription.created_at || '').toLocaleDateString('it-IT')}</p>
+                              {prescription.patient_notes && (
+                                <p className="text-sm text-gray-700 mt-1 break-words">{prescription.patient_notes}</p>
+                              )}
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${
+                              prescription.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              prescription.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {prescription.status === 'approved' ? 'Approvato' :
+                               prescription.status === 'pending' ? 'In attesa' :
+                               prescription.status === 'rejected' ? 'Rifiutato' :
+                               prescription.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))
                     )}
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {prescriptions.map((prescription: any) => (
-                      <Card key={prescription.id} className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200">
-                        <CardContent className="p-6">
-                          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                            <div className="flex-1 space-y-3">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                  <Pill className="h-5 w-5 text-green-600" />
-                                </div>
-                                <div>
-                                  <h3 className="text-lg font-semibold text-gray-900">
-                                    Dr. {prescription.doctors?.first_name} {prescription.doctors?.last_name}
-                                  </h3>
-                                  <div className="flex items-center space-x-2">
-                                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                                      prescription.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                      prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                      prescription.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                      'bg-gray-100 text-gray-800'
-                                    }`}>
-                                      {prescription.status === 'approved' ? 'Approvato' :
-                                       prescription.status === 'pending' ? 'In Attesa' :
-                                       prescription.status === 'rejected' ? 'Rifiutato' :
-                                       prescription.status}
-                                    </span>
-                                    {prescription.urgency === 'urgent' && (
-                                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                        Urgente
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="space-y-2">
-                                <h4 className="text-sm font-medium text-gray-700">Farmaci richiesti:</h4>
-                                <div className="space-y-1">
-                                  {prescription.prescription_items?.map((item: any, index: number) => (
-                                    <div key={index} className="text-sm text-gray-600 bg-slate-50 p-2 rounded">
-                                      <span className="font-medium">{item.medication_name}</span>
-                                      {item.dosage && <span className="text-gray-500"> - {item.dosage}</span>}
-                                      {item.quantity && <span className="text-gray-500"> ({item.quantity})</span>}
-                                      {item.patient_reason && <span className="text-gray-500"> - {item.patient_reason}</span>}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {prescription.patient_notes && (
-                                <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                  <span className="text-sm font-medium text-gray-700">Note: </span>
-                                  <span className="text-sm text-gray-600">{prescription.patient_notes}</span>
-                                </div>
-                              )}
-
-                              {prescription.doctor_notes && (
-                                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                  <span className="text-sm font-medium text-blue-800">Risposta del medico: </span>
-                                  <span className="text-sm text-blue-700">{prescription.doctor_notes}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex flex-col items-end space-y-2">
-                              <span className="text-xs text-gray-500">
-                                {new Date(prescription.created_at).toLocaleDateString('it-IT')}
-                              </span>
-                              {prescription.responded_at && (
-                                <span className="text-xs text-gray-500">
-                                  Risposto: {new Date(prescription.responded_at).toLocaleDateString('it-IT')}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
         )}
 
         {/* Doctors Tab */}
         {activeTab === 'doctors' && (
           <div className="space-y-6">
-            <Card className="medical-surface-elevated">
+            <Card className="card-responsive">
               <CardHeader>
                 <CardTitle>Il mio medico</CardTitle>
                 <CardDescription>Il medico di fiducia con cui hai una relazione attiva</CardDescription>
@@ -1156,10 +954,7 @@ export default function PatientDashboardPage() {
                         <p>• Contatta il tuo medico e chiedigli di utilizzare MedHubb</p>
                       </div>
                     </div>
-                    <Button
-                      onClick={() => router.push('/dashboard/patient/select-doctor')}
-                      className="medical-btn-success"
-                    >
+                    <Button onClick={() => router.push('/dashboard/patient/select-doctor')}>
                       <Plus className="h-4 w-4 mr-2" />
                       Trova un medico
                     </Button>

@@ -103,10 +103,10 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
   ];
 
   const navItems = userType === "doctor" ? doctorNavItems : patientNavItems;
-  const gradientStyle = userType === "doctor" 
-    ? "var(--gradient-primary)" 
+  const gradientStyle = userType === "doctor"
+    ? "var(--gradient-primary)"
     : "var(--gradient-secondary)";
-  const glassStyle = "backdrop-blur-md bg-white/95 border-r border-slate-200/50 shadow-xl";
+  const glassStyle = "backdrop-blur-md bg-slate-900/95 border-r border-slate-800/50 shadow-2xl";
 
   return (
     <>
@@ -130,7 +130,7 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
         }}
       >
       {/* Logo Section */}
-      <div className="flex items-center justify-between p-6 border-b border-slate-200/50">
+      <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
         <div className="flex items-center space-x-3">
           <div
             className="flex items-center justify-center rounded-2xl shadow-lg"
@@ -146,8 +146,8 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
           </div>
           {!isCollapsed && (
             <div>
-              <h1 className="text-slate-800 font-bold text-xl">MedHubb</h1>
-              <p className="text-xs text-slate-500 font-medium">
+              <h1 className="text-white font-bold text-xl">MedHubb</h1>
+              <p className="text-xs text-slate-400 font-medium">
                 {userType === "doctor" ? "Dashboard Medico" : "Area Paziente"}
               </p>
             </div>
@@ -155,7 +155,7 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
         </div>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 rounded-xl text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-all duration-200"
+          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isCollapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"} />
@@ -173,10 +173,10 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
               className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 group ${
                 item.active
                   ? "bg-gradient-to-r from-blue-500 to-green-500 text-white shadow-lg"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              <div className={`${item.active ? 'text-white' : 'text-slate-500 group-hover:text-slate-700'} transition-colors`}>
+              <div className={`${item.active ? 'text-white' : 'text-slate-400 group-hover:text-white'} transition-colors`}>
                 {item.icon}
               </div>
               {!isCollapsed && (
@@ -193,7 +193,7 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
       </nav>
 
       {/* User Info */}
-      <div className="p-4 border-t border-slate-200/50">
+      <div className="p-4 border-t border-slate-700/50">
         <div className="flex items-center space-x-3">
           <div
             className="flex items-center justify-center rounded-full text-white font-bold shadow-lg"
@@ -207,13 +207,13 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-slate-800 font-semibold text-sm truncate">{userName || 'Utente'}</p>
-              <p className="text-slate-500 text-xs truncate">{userEmail || ''}</p>
+              <p className="text-white font-semibold text-sm truncate">{userName || 'Utente'}</p>
+              <p className="text-slate-400 text-xs truncate">{userEmail || ''}</p>
             </div>
           )}
         </div>
         {!isCollapsed && (
-          <button className="w-full mt-4 px-4 py-2 text-sm text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all duration-200 font-medium">
+          <button className="w-full mt-4 px-4 py-2 text-sm text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-all duration-200 font-medium">
             <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
             </svg>
