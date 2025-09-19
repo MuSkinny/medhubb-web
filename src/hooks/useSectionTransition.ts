@@ -57,10 +57,10 @@ export function useSectionTransition(options: SectionTransitionOptions = {}) {
 // Hook per gestire lo stato globale delle sezioni nelle dashboard
 export function useDashboardSections() {
   const [activeSection, setActiveSection] = useState<string>('');
-  const [sectionData, setSectionData] = useState<Record<string, any>>({});
+  const [sectionData, setSectionData] = useState<Record<string, unknown>>({});
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
-  const updateSectionData = (section: string, data: any) => {
+  const updateSectionData = (section: string, data: unknown) => {
     setSectionData(prev => ({
       ...prev,
       [section]: data
