@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -13,7 +13,6 @@ export default function ResetPasswordPage() {
   const [userType, setUserType] = useState<'doctor' | 'patient'>('patient');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
 
   useEffect(() => {
     const type = searchParams.get('type');
