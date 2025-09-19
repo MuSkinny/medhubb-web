@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import DashboardLayout from "@/components/DashboardLayout";
+import SectionLoader from "@/components/SectionLoader";
 
 interface Patient {
   link_id: string;

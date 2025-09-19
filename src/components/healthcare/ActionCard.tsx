@@ -28,24 +28,27 @@ export default function ActionCard({
     switch (variant) {
       case "doctor":
         return {
-          iconBg: "rgba(74, 144, 226, 0.1)",
-          iconColor: "#4A90E2",
-          buttonBg: "linear-gradient(135deg, #4A90E2 0%, #5DADE2 100%)",
-          buttonHover: "hover:opacity-90"
+          iconBg: "hsl(var(--primary-light))",
+          iconColor: "hsl(var(--primary-dark))",
+          gradient: "var(--gradient-primary)",
+          cardBorder: "border-blue-200",
+          cardHover: "hover:border-blue-300 hover:bg-blue-50/50"
         };
       case "patient":
         return {
-          iconBg: "rgba(39, 174, 96, 0.1)",
-          iconColor: "#27AE60",
-          buttonBg: "linear-gradient(135deg, #27AE60 0%, #2ECC71 100%)",
-          buttonHover: "hover:opacity-90"
+          iconBg: "hsl(var(--secondary-light))",
+          iconColor: "hsl(var(--secondary-dark))",
+          gradient: "var(--gradient-secondary)",
+          cardBorder: "border-green-200",
+          cardHover: "hover:border-green-300 hover:bg-green-50/50"
         };
       default:
         return {
-          iconBg: "rgba(107, 114, 128, 0.1)",
-          iconColor: "#6B7280",
-          buttonBg: "#6B7280",
-          buttonHover: "hover:bg-gray-600"
+          iconBg: "hsl(var(--muted))",
+          iconColor: "hsl(var(--muted-foreground))",
+          gradient: "linear-gradient(135deg, hsl(var(--muted-foreground)) 0%, hsl(var(--foreground)) 100%)",
+          cardBorder: "border-slate-200",
+          cardHover: "hover:border-slate-300 hover:bg-slate-50/50"
         };
     }
   };
@@ -53,24 +56,21 @@ export default function ActionCard({
   const styles = getVariantStyles();
 
   return (
-    <div className={`bg-white rounded-xl p-6 border border-gray-200 shadow-sm transition-all hover:shadow-md ${className}`}>
+    <div className={`healthcare-card group cursor-pointer ${styles.cardBorder} ${styles.cardHover} ${className}`}>
       <div
-        className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-        style={{ background: styles.iconBg }}
+        className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+        style={{ background: styles.gradient }}
       >
-        <div style={{ color: styles.iconColor }}>
+        <div className="text-white">
           {icon}
         </div>
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 mb-4 text-sm">{description}</p>
+      <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-slate-900 transition-colors">{title}</h3>
+      <p className="text-slate-600 mb-6 text-sm leading-relaxed group-hover:text-slate-700 transition-colors">{description}</p>
       <button
         onClick={onClick}
         disabled={disabled}
-        className={`w-full py-2 px-4 rounded-lg text-white font-medium transition-all ${styles.buttonHover} disabled:opacity-50 disabled:cursor-not-allowed`}
-        style={{
-          background: disabled ? "#D1D5DB" : styles.buttonBg
-        }}
+        className="healthcare-button primary w-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {buttonText}
       </button>

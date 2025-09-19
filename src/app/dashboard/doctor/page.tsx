@@ -1,9 +1,25 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import Sidebar from "@/components/Sidebar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { UserProfileDropdown } from '@/components/UserProfileDropdown';
+import { 
+  CalendarDays, 
+  Clock,
+  Pill, 
+  Users, 
+  MapPin,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Plus
+} from 'lucide-react';
 
 interface PendingRequest {
   id: string;
@@ -33,6 +49,22 @@ export default function DoctorDashboardPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteData, setInviteData] = useState({ email: '', message: '' });
   const [creatingInvite, setCreatingInvite] = useState(false);
+  
+  // Nuovo stato per tab navigation
+  const [activeTab, setActiveTab] = useState<'overview' | 'appointments' | 'prescriptions' | 'patients' | 'offices' | 'calendar'>('overview');
+  
+  // Stati per il nuovo design
+  const [rejectReason, setRejectReason] = useState('');
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [requestToReject, setRequestToReject] = useState<string | null>(null);
+
+  // Stati per le sezioni SPA
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [doctorPatients, setDoctorPatients] = useState<any[]>([]);
+  const [offices, setOffices] = useState<any[]>([]);
+  const [loadingSections, setLoadingSections] = useState<{[key: string]: boolean}>({});
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -49,7 +81,6 @@ export default function DoctorDashboardPage() {
         return;
       }
 
-      // Usa l'API per verificare che sia un dottore
       const response = await fetch('/api/auth/check-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,15 +102,12 @@ export default function DoctorDashboardPage() {
         return;
       }
 
-      // Se non approvato, vai alla pagina pending
       if (userData.profile.status !== "approved") {
         router.push("/dashboard/pending");
         return;
       }
 
       setDoctorData({ ...user, profile: userData.profile });
-
-      // Carica richieste pending e pazienti
       await loadDoctorData(user.id);
     } catch (error) {
       console.error("Errore autenticazione dottore:", error);
@@ -98,7 +126,6 @@ export default function DoctorDashboardPage() {
 
   const loadPendingRequests = async (doctorId: string) => {
     try {
-      // Ottieni il token di autenticazione
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         console.error('No session found for doctor');
@@ -126,7 +153,6 @@ export default function DoctorDashboardPage() {
 
   const loadPatients = async (doctorId: string) => {
     try {
-      // Ottieni il token di autenticazione
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         console.error('No session found for doctor');
@@ -158,7 +184,6 @@ export default function DoctorDashboardPage() {
     setProcessingRequest(requestId);
 
     try {
-      // Ottieni il token di autenticazione
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         alert('Sessione scaduta, effettua di nuovo il login');
@@ -184,14 +209,13 @@ export default function DoctorDashboardPage() {
 
       if (apiResponse.ok && data.success) {
         alert(data.message);
-        // Ricarica i dati
         await loadDoctorData(doctorData.id);
       } else {
         alert(`Errore: ${data.error}`);
       }
     } catch (error) {
       console.error("Errore risposta richiesta:", error);
-      alert("Errore nell'elaborazione della risposta");
+      alert("Errore nella elaborazione della risposta");
     } finally {
       setProcessingRequest(null);
     }
@@ -216,17 +240,19 @@ export default function DoctorDashboardPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Mostra il link di invito
         const copyToClipboard = () => {
           navigator.clipboard.writeText(data.inviteLink);
           alert("Link copiato negli appunti!");
         };
 
-        if (window.confirm(`Invito creato con successo!\n\nLink: ${data.inviteLink}\n\nVuoi copiare il link negli appunti?`)) {
+        if (window.confirm(`Invito creato con successo!
+
+Link: ${data.inviteLink}
+
+Vuoi copiare il link negli appunti?`)) {
           copyToClipboard();
         }
 
-        // Reset form
         setInviteData({ email: '', message: '' });
         setShowInviteModal(false);
       } else {
@@ -234,26 +260,172 @@ export default function DoctorDashboardPage() {
       }
     } catch (error) {
       console.error("Errore creazione invito:", error);
-      alert("Errore nella creazione dell'invito");
+      alert("Errore nella creazione del invito");
     } finally {
       setCreatingInvite(false);
     }
   };
 
-  // const handleLogout = async () => {
-  //   await supabase.auth.signOut();
-  //   router.push("/");
-  // };
+  const handleRejectRequest = () => {
+    if (requestToReject && rejectReason.trim()) {
+      handleRequestResponse(requestToReject, 'rejected');
+      setIsRejectDialogOpen(false);
+      setRejectReason('');
+      setRequestToReject(null);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('it-IT', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const getRelativeDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return 'oggi';
+    if (diffInDays === 1) return 'ieri';
+    if (diffInDays < 7) return `${diffInDays} giorni fa`;
+    return formatDate(dateString);
+  };
+
+  // Funzioni per caricare dati delle sezioni
+  const loadAppointments = async () => {
+    if (!doctorData) return;
+    
+    setLoadingSections(prev => ({ ...prev, appointments: true }));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`/api/appointments?doctorId=${doctorData.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAppointments(data.appointments || []);
+      }
+    } catch (error) {
+      console.error("Errore caricamento appuntamenti:", error);
+    } finally {
+      setLoadingSections(prev => ({ ...prev, appointments: false }));
+    }
+  };
+
+  const loadPrescriptions = async () => {
+    if (!doctorData) return;
+    
+    setLoadingSections(prev => ({ ...prev, prescriptions: true }));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`/api/prescriptions?doctorId=${doctorData.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPrescriptions(data.requests || []);
+      }
+    } catch (error) {
+      console.error("Errore caricamento prescrizioni:", error);
+    } finally {
+      setLoadingSections(prev => ({ ...prev, prescriptions: false }));
+    }
+  };
+
+  const loadDoctorPatients = async () => {
+    if (!doctorData) return;
+    
+    setLoadingSections(prev => ({ ...prev, patients: true }));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`/api/connections/patients?doctorId=${doctorData.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDoctorPatients(data.patients || []);
+      }
+    } catch (error) {
+      console.error("Errore caricamento pazienti:", error);
+    } finally {
+      setLoadingSections(prev => ({ ...prev, patients: false }));
+    }
+  };
+
+  const loadOffices = async () => {
+    if (!doctorData) return;
+    
+    setLoadingSections(prev => ({ ...prev, offices: true }));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(`/api/offices?doctorId=${doctorData.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setOffices(data.offices || []);
+      }
+    } catch (error) {
+      console.error("Errore caricamento ambulatori:", error);
+    } finally {
+      setLoadingSections(prev => ({ ...prev, offices: false }));
+    }
+  };
+
+  // Carica dati quando si cambia tab
+  useEffect(() => {
+    if (!doctorData) return;
+
+    switch (activeTab) {
+      case 'appointments':
+        loadAppointments();
+        break;
+      case 'prescriptions':
+        loadPrescriptions();
+        break;
+      case 'patients':
+        loadDoctorPatients();
+        break;
+      case 'offices':
+        loadOffices();
+        break;
+    }
+  }, [activeTab, doctorData]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-teal-50/10 flex items-center justify-center">
         <div className="text-center">
-          <svg className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p className="text-gray-600">Caricamento dashboard medico...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Caricamento Dashboard Medico...</p>
         </div>
       </div>
     );
@@ -265,484 +437,608 @@ export default function DoctorDashboardPage() {
 
   const userName = `${doctorData.profile?.first_name || ''} ${doctorData.profile?.last_name || ''}`.trim();
 
-  return (
-    <div className="main-layout">
-      <Sidebar
-        userType="doctor"
-        userName={userName}
-        userEmail={doctorData.email || ''}
-      />
+  // SPA Navigation - no redirects, show content based on activeTab
 
-      <div className="main-content">
-        {/* Mobile Header */}
-        <div className="lg:hidden card m-4 mb-0">
-          <div className="card-content">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-semibold">
-                  Dr. {userName.split(' ')[0]}
-                </h1>
-                <p className="text-sm text-gray-600">
-                  {pendingRequests.length} richieste in attesa
-                </p>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-teal-50/10">
+      <div className="container-responsive py-8">
+        {/* Header with Logo and User Profile */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10">
+                <img 
+                  src="/logo2.svg" 
+                  alt="MedHubb Logo" 
+                  className="w-full h-full"
+                />
               </div>
-              <button
-                onClick={() => {/* Toggle sidebar */}}
-                className="btn btn-ghost p-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-              </button>
+              <div>
+                <h1 className="text-xl font-bold text-blue-600">MedHubb</h1>
+                <p className="text-sm text-gray-500">Dashboard Medico</p>
+              </div>
             </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <UserProfileDropdown 
+              userName={userName}
+              userEmail={doctorData.email || ''}
+              userType="doctor"
+              className="self-start sm:self-auto"
+            />
           </div>
         </div>
 
-        {/* Main Content */}
-        <main className="main-body">
-          {/* Welcome Header - Desktop */}
-          <div className="hidden lg:block mb-8">
-            <div className="card">
-              <div className="card-content">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-3xl font-bold mb-2">
-                      Buongiorno, Dr. {userName.split(' ')[0]}! 👨‍⚕️
-                    </h1>
-                    <p className="text-gray-600">
-                      Hai {pendingRequests.length} nuove richieste da gestire e {patients.length} pazienti sotto la tua cura
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">
-                      {new Date().toLocaleDateString('it-IT', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Navigation Tabs */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="tabs-responsive">
+              {[
+                { id: 'overview', label: 'Panoramica', icon: CalendarDays },
+                { id: 'appointments', label: 'Appuntamenti', icon: Clock },
+                { id: 'prescriptions', label: 'Ricette', icon: Pill },
+                { id: 'patients', label: 'Pazienti', icon: Users },
+                { id: 'offices', label: 'Ambulatori', icon: MapPin },
+                { id: 'calendar', label: 'Calendario', icon: Calendar },
+              ].map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id as 'overview' | 'appointments' | 'prescriptions' | 'patients' | 'offices' | 'calendar')}
+                  className={`tab-responsive transition-all duration-200 ${
+                    activeTab === id
+                      ? 'border-blue-600 text-blue-700 bg-blue-50'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </nav>
           </div>
+        </div>
 
-          {/* Priority Actions */}
-          {pendingRequests.length > 0 && (
-            <div className="mb-8">
-              <div className="card border-l-4 border-red-500 bg-red-50">
-                <div className="card-content">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-4">
-                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold">
-                          {pendingRequests.length} richieste in attesa
-                        </h3>
-                        <p className="text-gray-600">
-                          Nuovi pazienti da approvare
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      className="btn btn-default"
-                      onClick={() => router.push('/dashboard/doctor/requests')}
-                    >
-                      Gestisci ora
-                    </button>
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid-responsive lg:grid-cols-4 gap-6">
+              <Card className="medical-surface-elevated">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="medical-caption text-slate-700">Pazienti totali</CardTitle>
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Users className="h-4 w-4 text-blue-600" />
                   </div>
-                </div>
-              </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-bold text-slate-900">{patients.length}</div>
+                  <p className="medical-caption text-slate-500">attivi</p>
+                </CardContent>
+              </Card>
+
+              <Card className="medical-surface-elevated">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="medical-caption text-slate-700">Richieste in attesa</CardTitle>
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <Clock className="h-4 w-4 text-amber-600" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-bold text-slate-900">{pendingRequests.length}</div>
+                  <p className="medical-caption text-slate-500">da gestire</p>
+                </CardContent>
+              </Card>
+
+              <Card className="medical-surface-elevated">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="medical-caption text-slate-700">Appuntamenti oggi</CardTitle>
+                  <div className="p-2 bg-teal-100 rounded-lg">
+                    <CalendarDays className="h-4 w-4 text-teal-600" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-bold text-slate-900">0</div>
+                  <p className="medical-caption text-slate-500">in programma</p>
+                </CardContent>
+              </Card>
+
+              <Card className="medical-surface-elevated">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="medical-caption text-slate-700">Richieste ricette</CardTitle>
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Pill className="h-4 w-4 text-green-600" />
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-bold text-slate-900">0</div>
+                  <p className="medical-caption text-slate-500">da gestire</p>
+                </CardContent>
+              </Card>
             </div>
-          )}
 
-          {/* Key Practice Metrics */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-6">
-              La tua pratica oggi
-            </h2>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Pazienti Totali */}
-              <div className="card text-center">
-                <div className="card-content pt-6">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM9 9a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                  </div>
-                  <div className="text-2xl font-bold mb-1">
-                    {patients.length}
-                  </div>
-                  <h3 className="font-semibold mb-1">
-                    Pazienti
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Sotto la tua cura
-                  </p>
-                </div>
-              </div>
-
-              {/* Appuntamenti Oggi */}
-              <div className="card text-center">
-                <div className="card-content pt-6">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                  </div>
-                  <div className="text-2xl font-bold mb-1">
-                    0
-                  </div>
-                  <h3 className="font-semibold mb-1">
-                    Oggi
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Visite programmate
-                  </p>
-                </div>
-              </div>
-
-              {/* Richieste */}
-              <div className="card text-center">
-                <div className="card-content pt-6">
-                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                  </div>
-                  <div className="text-2xl font-bold mb-1">
-                    {pendingRequests.length}
-                  </div>
-                  <h3 className="font-semibold mb-1">
-                    Richieste
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Da approvare
-                  </p>
-                </div>
-              </div>
-
-              {/* Attività */}
-              <div className="card text-center">
-                <div className="card-content pt-6">
-                  <div className="w-12 h-12 bg-secondary/50 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                    </svg>
-                  </div>
-                  <div className="text-2xl font-bold mb-1">
-                    100%
-                  </div>
-                  <h3 className="font-semibold mb-1">
-                    Attività
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Completamento
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Primary Doctor Actions */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-6">
-              Azioni rapide
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-              {/* Gestisci Pazienti - CTA Principale */}
-              <div className="card">
-                <div className="card-content pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM9 9a2 2 0 11-4 0 2 2 0 014 0z"/>
-                      </svg>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-600">{patients.length} pazienti</p>
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Gestisci pazienti</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Visualizza cartelle cliniche e storico visite
-                  </p>
-                </div>
-                <div className="card-footer">
-                  <button
-                    onClick={() => router.push('/dashboard/doctor/patients')}
-                    className="btn btn-default w-full"
-                  >
-                    Visualizza tutti
-                  </button>
-                </div>
-              </div>
-
-              {/* Invita Nuovo Paziente */}
-              <div className="card">
-                <div className="card-content pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                      </svg>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-600">Nuovo collegamento</p>
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Invita paziente</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Crea un link di invito personalizzato
-                  </p>
-                </div>
-                <div className="card-footer">
-                  <button
-                    onClick={() => setShowInviteModal(true)}
-                    className="btn btn-success w-full"
-                  >
-                    Crea invito
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Secondary Actions */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-6">
-              Gestione pratica
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-              <div className="card cursor-pointer hover:shadow-lg transition-shadow"
-                   onClick={() => router.push('/dashboard/doctor/schedule')}>
-                <div className="card-content pt-6 text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold mb-2">Agenda</h3>
-                  <p className="text-sm text-gray-600">Programma visite</p>
-                </div>
-              </div>
-
-              <div className="card cursor-pointer hover:shadow-lg transition-shadow"
-                   onClick={() => router.push('/dashboard/doctor/prescriptions')}>
-                <div className="card-content pt-6 text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold mb-2">Prescrizioni</h3>
-                  <p className="text-sm text-gray-600">Ricette digitali</p>
-                </div>
-              </div>
-
-              <div className="card cursor-pointer hover:shadow-lg transition-shadow"
-                   onClick={() => router.push('/dashboard/doctor/analytics')}>
-                <div className="card-content pt-6 text-center">
-                  <div className="w-12 h-12 bg-secondary/50 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold mb-2">Analytics</h3>
-                  <p className="text-sm text-gray-600">Statistiche pratica</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Pending Requests Section */}
-          {pendingRequests.length > 0 && (
-            <div className="card mb-8">
-              <div className="card-header">
-                <div className="flex items-center justify-between">
-                  <h2 className="card-title">Richieste di Collegamento in Attesa</h2>
-                  <div className="badge badge-secondary">
-                    {pendingRequests.length} in attesa
-                  </div>
-                </div>
-              </div>
-              <div className="card-content">
-                <div className="space-y-4">
-                  {pendingRequests.slice(0, 3).map((request) => (
-                    <div key={request.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-                      <div className="flex items-center flex-1">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold">
-                            {request.patient_first_name} {request.patient_last_name}
-                          </h4>
-                          <p className="text-sm text-gray-600">{request.patient_email}</p>
-                          {request.message && (
-                            <p className="text-xs text-gray-600 mt-1">&ldquo;{request.message}&rdquo;</p>
-                          )}
-                          <p className="text-xs text-gray-600 mt-1">
-                            {new Date(request.created_at).toLocaleDateString('it-IT', {
-                              day: 'numeric',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex space-x-2 ml-4">
-                        <button
-                          onClick={() => handleRequestResponse(request.id, 'accepted')}
-                          disabled={processingRequest === request.id}
-                          className="btn btn-sm btn-success"
-                        >
-                          {processingRequest === request.id ? (
-                            <svg className="animate-spin h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          ) : (
-                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                          )}
-                          Accetta
-                        </button>
-                        <button
-                          onClick={() => handleRequestResponse(request.id, 'rejected')}
-                          disabled={processingRequest === request.id}
-                          className="btn btn-sm btn-ghost text-red-600 hover:bg-red-100"
-                        >
-                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
-                          </svg>
-                          Rifiuta
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {pendingRequests.length > 3 && (
-                    <div className="text-center pt-4">
-                      <button
-                        onClick={() => router.push('/dashboard/doctor/requests')}
-                        className="btn btn-ghost text-blue-600"
-                      >
-                        Visualizza tutte le {pendingRequests.length} richieste →
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Recent Activity */}
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">Attività Recente</h2>
-            </div>
-            <div className="card-content">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Quick Actions */}
+            <div className="space-y-6">
+              {/* Pending Requests - Priority */}
               {pendingRequests.length > 0 && (
-                <div className="p-4 rounded-lg border-l-4 border-red-500 bg-red-50">
-                  <div className="flex items-center mb-3">
-                    <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-                      <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
+                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center space-x-3">
+                      <div className="p-2 bg-red-100 rounded-lg">
+                        <Users className="h-5 w-5 text-red-600" />
+                      </div>
+                      <span className="medical-subtitle text-slate-800">Richieste di associazione</span>
+                      <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold">
+                        {pendingRequests.length}
+                      </span>
+                    </CardTitle>
+                    <CardDescription>Nuovi pazienti richiedono la tua approvazione</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {pendingRequests.slice(0, 3).map((request) => (
+                        <div key={request.id} className="bg-gradient-to-r from-red-50 to-red-50/50 border border-red-200 rounded-lg p-6 space-y-4 hover:shadow-md transition-shadow duration-200">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                  <Users className="h-5 w-5 text-red-600" />
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-gray-900">
+                                    {request.patient_first_name} {request.patient_last_name}
+                                  </p>
+                                  <p className="text-sm text-red-600">Richiesta di associazione</p>
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="font-medium text-gray-700">Email:</span>
+                                  <p className="text-gray-600">{request.patient_email}</p>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-700">Richiesta inviata:</span>
+                                  <p className="text-gray-600">{getRelativeDate(request.created_at)}</p>
+                                </div>
+                                {request.message && (
+                                  <div className="col-span-full">
+                                    <span className="font-medium text-gray-700">Messaggio:</span>
+                                    <p className="text-gray-600 italic">&quot;{request.message}&quot;</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                            <Button
+                              size="sm"
+                              className="flex-1 medical-btn-success"
+                              onClick={() => handleRequestResponse(request.id, 'accepted')}
+                              disabled={processingRequest === request.id}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              {processingRequest === request.id ? 'Approvando...' : 'Approva Paziente'}
+                            </Button>
+                            <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="flex-1 border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+                                  onClick={() => {
+                                    setRequestToReject(request.id);
+                                    setIsRejectDialogOpen(true);
+                                  }}
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Rifiuta Richiesta
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Rifiuta richiesta di associazione</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                      Paziente: <strong>{request.patient_first_name} {request.patient_last_name}</strong>
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      Email: <strong>{request.patient_email}</strong>
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Motivo del rifiuto (opzionale)
+                                    </label>
+                    <Textarea
+                      value={rejectReason}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectReason(e.target.value)}
+                      placeholder="Spiega perché rifiuti questa richiesta..."
+                      className="min-h-[100px]"
+                    />
+                                  </div>
+                                  <div className="flex space-x-2 pt-4">
+                                    <Button
+                                      onClick={handleRejectRequest}
+                                      disabled={processingRequest === request.id}
+                                      className="flex-1 bg-red-600 hover:bg-red-700"
+                                    >
+                                      {processingRequest === request.id ? 'Rifiutando...' : 'Rifiuta richiesta'}
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setIsRejectDialogOpen(false);
+                                        setRejectReason('');
+                                        setRequestToReject(null);
+                                      }}
+                                      className="flex-1"
+                                    >
+                                      Annulla
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <h3 className="font-semibold">Richieste in Attesa</h3>
-                  </div>
-                  <p className="text-gray-600 mb-3">
-                    Hai {pendingRequests.length} richieste da processare.
-                  </p>
-                  <button
-                    onClick={() => router.push('/dashboard/doctor/requests')}
-                    className="btn btn-sm btn-default"
-                  >
-                    Gestisci
-                  </button>
-                </div>
+                  </CardContent>
+                </Card>
               )}
 
-              <div
-                className="p-4 rounded-lg border-l-4"
-                style={{
-                  background: 'rgba(74, 144, 226, 0.05)',
-                  borderColor: '#4A90E2'
-                }}
-              >
-                <div className="flex items-center mb-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
-                    style={{ background: 'rgba(74, 144, 226, 0.2)' }}
-                  >
-                    <svg className="w-4 h-4" style={{ color: '#4A90E2' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM9 9a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-blue-800">Pazienti</h3>
-                </div>
-                <p className="text-blue-700 mb-3">
-                  {patients.length === 0
-                    ? "Nessun paziente collegato ancora."
-                    : `${patients.length} pazient${patients.length === 1 ? 'e' : 'i'} collegat${patients.length === 1 ? 'o' : 'i'}.`
-                  }
-                </p>
-                <button
-                  onClick={() => router.push('/dashboard/doctor/patients')}
-                  className="px-4 py-2 rounded-lg text-white text-sm"
-                  style={{ background: 'linear-gradient(135deg, #4A90E2 0%, #5DADE2 100%)' }}
-                >
-                  Visualizza
-                </button>
+              {/* Quick Actions Grid */}
+              <div className="grid-responsive-2 gap-6">
+                {/* Gestisci Pazienti */}
+                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
+                      onClick={() => setActiveTab('patients')}>
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                      <Users className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
+                      Gestisci Pazienti
+                    </CardTitle>
+                    <CardDescription className="group-hover:text-slate-700 transition-colors">
+                      {patients.length} pazienti sotto la tua cura
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+
+                {/* Appuntamenti */}
+                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
+                      onClick={() => setActiveTab('appointments')}>
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                      <Calendar className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
+                      Appuntamenti
+                    </CardTitle>
+                    <CardDescription className="group-hover:text-slate-700 transition-colors">
+                      Gestisci il calendario delle visite
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+
+                {/* Ricette */}
+                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
+                      onClick={() => setActiveTab('prescriptions')}>
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                      <Pill className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
+                      Ricette
+                    </CardTitle>
+                    <CardDescription className="group-hover:text-slate-700 transition-colors">
+                      Gestisci le richieste di prescrizioni
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+
+                {/* Invita Paziente */}
+                <Card className="medical-surface-elevated hover:shadow-xl transition-shadow duration-200 cursor-pointer group"
+                      onClick={() => setShowInviteModal(true)}>
+                  <CardHeader className="text-center pb-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
+                      <Plus className="w-8 h-8 text-white" />
+                    </div>
+                    <CardTitle className="medical-subtitle text-slate-800 group-hover:text-slate-900 transition-colors">
+                      Invita Paziente
+                    </CardTitle>
+                    <CardDescription className="group-hover:text-slate-700 transition-colors">
+                      Crea un link di invito personalizzato
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
               </div>
             </div>
           </div>
-        </div>
-        </main>
+        )}
+
+        {/* Appointments Tab */}
+        {activeTab === 'appointments' && (
+          <div className="space-y-6">
+            <Card className="medical-surface-elevated">
+              <CardHeader>
+                <CardTitle className="medical-subtitle text-slate-800">Gestione Appuntamenti</CardTitle>
+                <CardDescription>Visualizza e gestisci tutti i tuoi appuntamenti</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingSections.appointments ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Caricamento appuntamenti...</p>
+                  </div>
+                ) : appointments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Calendar className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessun appuntamento</h3>
+                    <p className="text-gray-600">Non ci sono appuntamenti in programma</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {appointments.map((appointment: any) => (
+                      <div key={appointment.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900">
+                              {appointment.patients?.first_name} {appointment.patients?.last_name}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {new Date(appointment.appointment_date).toLocaleDateString('it-IT')} - {appointment.start_time}
+                            </p>
+                            {appointment.patient_notes && (
+                              <p className="text-sm text-gray-700 mt-1">{appointment.patient_notes}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                              appointment.status === 'requested' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {appointment.status === 'confirmed' ? 'Confermato' :
+                               appointment.status === 'requested' ? 'In Attesa' :
+                               appointment.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Prescriptions Tab */}
+        {activeTab === 'prescriptions' && (
+          <div className="space-y-6">
+            <Card className="medical-surface-elevated">
+              <CardHeader>
+                <CardTitle className="medical-subtitle text-slate-800">Richieste Ricette</CardTitle>
+                <CardDescription>Gestisci le richieste ricette dai pazienti</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingSections.prescriptions ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Caricamento prescrizioni...</p>
+                  </div>
+                ) : prescriptions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Pill className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna richiesta ricetta</h3>
+                    <p className="text-gray-600">Non ci sono richieste di prescrizioni</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {prescriptions.map((prescription: any) => (
+                      <div key={prescription.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900">
+                              {prescription.patients?.first_name} {prescription.patients?.last_name}
+                            </h3>
+                            <div className="text-sm text-gray-600">
+                              {prescription.prescription_items?.map((item: any, index: number) => (
+                                <div key={index} className="mt-1">
+                                  <span className="font-medium">{item.medication_name}</span>
+                                  {item.dosage && <span> - {item.dosage}</span>}
+                                  {item.quantity && <span> ({item.quantity})</span>}
+                                </div>
+                              ))}
+                            </div>
+                            {prescription.patient_notes && (
+                              <p className="text-sm text-gray-700 mt-2">{prescription.patient_notes}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              prescription.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              prescription.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {prescription.status === 'approved' ? 'Approvato' :
+                               prescription.status === 'pending' ? 'In Attesa' :
+                               prescription.status === 'rejected' ? 'Rifiutato' :
+                               prescription.status}
+                            </span>
+                            {prescription.urgency === 'urgent' && (
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                Urgente
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Patients Tab */}
+        {activeTab === 'patients' && (
+          <div className="space-y-6">
+            <Card className="medical-surface-elevated">
+              <CardHeader>
+                <CardTitle className="medical-subtitle text-slate-800">I miei pazienti</CardTitle>
+                <CardDescription>Gestisci i tuoi pazienti e le loro richieste</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingSections.patients ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Caricamento pazienti...</p>
+                  </div>
+                ) : doctorPatients.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Users className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessun paziente</h3>
+                    <p className="text-gray-600">Non hai ancora pazienti collegati</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {doctorPatients.map((patient: any) => (
+                      <div key={patient.link_id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900">
+                              {patient.first_name} {patient.last_name}
+                            </h3>
+                            <p className="text-sm text-gray-600">{patient.email}</p>
+                            <p className="text-sm text-gray-500">
+                              Collegato il {new Date(patient.linked_at).toLocaleDateString('it-IT')}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                              Attivo
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Offices Tab */}
+        {activeTab === 'offices' && (
+          <div className="space-y-6">
+            <Card className="medical-surface-elevated">
+              <CardHeader>
+                <CardTitle className="medical-subtitle text-slate-800">Gestione Ambulatori</CardTitle>
+                <CardDescription>Gestisci i tuoi ambulatori e orari</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingSections.offices ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Caricamento ambulatori...</p>
+                  </div>
+                ) : offices.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <MapPin className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessun ambulatorio</h3>
+                    <p className="text-gray-600">Non hai ancora configurato ambulatori</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {offices.map((office: any) => (
+                      <div key={office.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-gray-900">{office.name}</h3>
+                            <div className="text-sm text-gray-600 space-y-1">
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="w-4 h-4" />
+                                <span>{office.address}, {office.city}</span>
+                                {office.postal_code && <span>({office.postal_code})</span>}
+                              </div>
+                              {office.phone && (
+                                <p>📞 {office.phone}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              office.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {office.is_active ? 'Attivo' : 'Inattivo'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Calendar Tab */}
+        {activeTab === 'calendar' && (
+          <div className="space-y-6">
+            <Card className="medical-surface-elevated">
+              <CardHeader>
+                <CardTitle className="medical-subtitle text-slate-800">Calendario</CardTitle>
+                <CardDescription>Vista calendario degli appuntamenti</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Vista Calendario</h3>
+                  <p className="text-gray-600 mb-4">Questa sezione mostrerà il calendario con la logica esistente</p>
+                  <p className="text-sm text-blue-600">Vista calendario integrata</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Modal per Invito */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Crea Invito Paziente</h3>
-              <button
-                onClick={() => setShowInviteModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
-            </div>
-
+        <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Crea Invito Paziente</DialogTitle>
+            </DialogHeader>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email Paziente (opzionale)
                 </label>
-                <input
+                <Input
                   type="email"
                   value={inviteData.email}
-                  onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInviteData({ ...inviteData, email: e.target.value })}
                   placeholder="paziente@example.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
 
@@ -750,33 +1046,33 @@ export default function DoctorDashboardPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Messaggio (opzionale)
                 </label>
-                <textarea
+                <Textarea
                   value={inviteData.message}
-                  onChange={(e) => setInviteData({ ...inviteData, message: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInviteData({ ...inviteData, message: e.target.value })}
                   placeholder="Messaggio personalizzato..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
                 />
               </div>
             </div>
 
             <div className="flex space-x-3 mt-6">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => setShowInviteModal(false)}
-                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1"
               >
                 Annulla
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleCreateInvite}
                 disabled={creatingInvite}
-                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                className="flex-1"
               >
                 {creatingInvite ? "Creando..." : "Crea Invito"}
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

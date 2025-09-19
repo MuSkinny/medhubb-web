@@ -27,18 +27,21 @@ export default function HealthCard({
     switch (color) {
       case "green":
         return {
-          iconBg: "rgba(52, 199, 89, 0.1)",
-          iconColor: "#34C759",
+          iconBg: "hsl(var(--secondary-light))",
+          iconColor: "hsl(var(--secondary-dark))",
+          gradient: "var(--gradient-secondary)"
         };
       case "orange":
         return {
-          iconBg: "rgba(255, 149, 0, 0.1)",
-          iconColor: "#FF9500",
+          iconBg: "hsl(var(--warning))",
+          iconColor: "hsl(var(--warning-foreground))",
+          gradient: "linear-gradient(135deg, hsl(var(--warning)) 0%, hsl(var(--warning-dark)) 100%)"
         };
       default:
         return {
-          iconBg: "rgba(0, 122, 255, 0.1)",
-          iconColor: "#007AFF",
+          iconBg: "hsl(var(--primary-light))",
+          iconColor: "hsl(var(--primary-dark))",
+          gradient: "var(--gradient-primary)"
         };
     }
   };
@@ -60,30 +63,30 @@ export default function HealthCard({
   const styles = getColorStyles();
 
   return (
-    <div className={`healthcare-card healthcare-stat-card animate-fade-in ${className}`}>
-      <div className="flex items-center justify-center mb-4">
+    <div className={`healthcare-stat-card group cursor-pointer ${className}`}>
+      <div className="flex items-center justify-center mb-6">
         <div
-          className="w-16 h-16 rounded-full flex items-center justify-center"
-          style={{ background: styles.iconBg }}
+          className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110"
+          style={{ background: styles.gradient }}
         >
-          <Icon size={28} style={{ color: styles.iconColor }} />
+          <Icon size={32} style={{ color: 'white' }} />
         </div>
       </div>
 
       <div className="text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <span className="text-4xl font-bold text-slate-800 group-hover:text-slate-900 transition-colors">
             {value}
           </span>
           {getTrendIcon()}
         </div>
 
-        <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-xl font-bold mb-2 text-slate-800 group-hover:text-slate-900 transition-colors">
           {title}
         </h3>
 
         {subtitle && (
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-sm text-slate-600 group-hover:text-slate-700 transition-colors leading-relaxed">
             {subtitle}
           </p>
         )}

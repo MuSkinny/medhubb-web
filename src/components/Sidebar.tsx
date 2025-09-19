@@ -103,8 +103,10 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
   ];
 
   const navItems = userType === "doctor" ? doctorNavItems : patientNavItems;
-  const primaryColor = userType === "doctor" ? "#4A90E2" : "#27AE60";
-  const secondaryColor = userType === "doctor" ? "#5DADE2" : "#2ECC71";
+  const gradientStyle = userType === "doctor" 
+    ? "var(--gradient-primary)" 
+    : "var(--gradient-secondary)";
+  const glassStyle = "backdrop-blur-md bg-white/95 border-r border-slate-200/50 shadow-xl";
 
   return (
     <>
@@ -119,25 +121,23 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
       {/* Sidebar */}
       <div
         className={`
-          h-screen flex flex-col transition-all duration-300 z-50
+          h-screen flex flex-col transition-all duration-300 z-50 ${glassStyle}
           lg:relative lg:translate-x-0
-          ${isCollapsed ? 'fixed -translate-x-full lg:w-20' : 'fixed translate-x-0 lg:w-60'}
+          ${isCollapsed ? 'fixed -translate-x-full lg:w-20' : 'fixed translate-x-0 lg:w-64'}
         `}
         style={{
-          width: isCollapsed ? "80px" : "240px",
-          background: `linear-gradient(180deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
-          borderRight: "1px solid rgba(255, 255, 255, 0.1)"
+          width: isCollapsed ? "80px" : "256px"
         }}
       >
       {/* Logo Section */}
-      <div className="flex items-center justify-between p-6">
+      <div className="flex items-center justify-between p-6 border-b border-slate-200/50">
         <div className="flex items-center space-x-3">
           <div
-            className="flex items-center justify-center rounded-lg"
+            className="flex items-center justify-center rounded-2xl shadow-lg"
             style={{
               width: "40px",
               height: "40px",
-              background: "rgba(255, 255, 255, 0.2)"
+              background: gradientStyle
             }}
           >
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -145,15 +145,17 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
             </svg>
           </div>
           {!isCollapsed && (
-            <h1 className="text-white font-bold text-xl">MedHubb</h1>
+            <div>
+              <h1 className="text-slate-800 font-bold text-xl">MedHubb</h1>
+              <p className="text-xs text-slate-500 font-medium">
+                {userType === "doctor" ? "Dashboard Medico" : "Area Paziente"}
+              </p>
+            </div>
           )}
         </div>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 rounded-lg text-white transition-colors"
-          style={{
-            background: "rgba(255, 255, 255, 0.1)"
-          }}
+          className="p-2 rounded-xl text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-all duration-200"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isCollapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"} />
@@ -162,21 +164,28 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 pb-4">
+      <nav className="flex-1 px-4 py-6">
         <div className="space-y-2">
           {navItems.map((item, index) => (
             <Link
               key={index}
               href={item.href}
-              className={`flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${
+              className={`flex items-center px-4 py-3 rounded-xl transition-all duration-200 group ${
                 item.active
-                  ? "bg-white text-gray-800 shadow-lg"
-                  : "text-white/80 hover:bg-white/10 hover:text-white"
+                  ? "bg-gradient-to-r from-blue-500 to-green-500 text-white shadow-lg"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-800"
               }`}
             >
-              {item.icon}
+              <div className={`${item.active ? 'text-white' : 'text-slate-500 group-hover:text-slate-700'} transition-colors`}>
+                {item.icon}
+              </div>
               {!isCollapsed && (
-                <span className="ml-3 font-medium text-sm">{item.label}</span>
+                <span className="ml-3 font-semibold text-sm">{item.label}</span>
+              )}
+              {!isCollapsed && item.active && (
+                <div className="ml-auto">
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </div>
               )}
             </Link>
           ))}
@@ -184,32 +193,30 @@ export default function Sidebar({ userType, userName, userEmail }: SidebarProps)
       </nav>
 
       {/* User Info */}
-      <div className="p-4 border-t border-white/10">
+      <div className="p-4 border-t border-slate-200/50">
         <div className="flex items-center space-x-3">
           <div
-            className="flex items-center justify-center rounded-full text-white font-medium"
+            className="flex items-center justify-center rounded-full text-white font-bold shadow-lg"
             style={{
               width: "40px",
               height: "40px",
-              background: "rgba(255, 255, 255, 0.2)"
+              background: gradientStyle
             }}
           >
             {userName ? userName.charAt(0).toUpperCase() : '?'}
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-white font-medium text-sm truncate">{userName || 'Utente'}</p>
-              <p className="text-white/70 text-xs truncate">{userEmail || ''}</p>
+              <p className="text-slate-800 font-semibold text-sm truncate">{userName || 'Utente'}</p>
+              <p className="text-slate-500 text-xs truncate">{userEmail || ''}</p>
             </div>
           )}
         </div>
         {!isCollapsed && (
-          <button
-            className="w-full mt-3 px-3 py-2 text-xs text-white/80 rounded-lg transition-colors"
-            style={{
-              background: "rgba(255, 255, 255, 0.1)"
-            }}
-          >
+          <button className="w-full mt-4 px-4 py-2 text-sm text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all duration-200 font-medium">
+            <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
             Esci
           </button>
         )}
