@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -22,11 +22,7 @@ export default function SelectDoctorPage() {
   const [connectionStatus, setConnectionStatus] = useState<{status: string; pendingRequest?: {doctors: {first_name?: string; last_name?: string}}; [key: string]: unknown} | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    checkPatientAuth();
-  }, []);
-
-  const checkPatientAuth = async () => {
+  const checkPatientAuth = useCallback(async () => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -102,7 +98,11 @@ export default function SelectDoctorPage() {
     } catch (error) {
       console.error("Errore controllo collegamento:", error);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkPatientAuth();
+  }, [checkPatientAuth]);
 
   const loadAvailableDoctors = async () => {
     try {

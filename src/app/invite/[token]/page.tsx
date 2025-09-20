@@ -35,7 +35,7 @@ export default function InviteAcceptPage() {
       loadInviteData();
       checkAuth();
     }
-  }, [token]);
+  }, [token, loadInviteData, checkAuth]);
 
   const checkAuth = async () => {
     try {

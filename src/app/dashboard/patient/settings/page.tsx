@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,11 +50,7 @@ export default function PatientSettingsPage() {
   });
   const router = useRouter();
 
-  useEffect(() => {
-    checkPatientAuth();
-  }, []);
-
-  const checkPatientAuth = async () => {
+  const checkPatientAuth = useCallback(async () => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -97,7 +94,11 @@ export default function PatientSettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkPatientAuth();
+  }, [checkPatientAuth]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,9 +202,11 @@ export default function PatientSettingsPage() {
             </Button>
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10">
-                <img 
-                  src="/logo2.svg" 
-                  alt="MedHubb Logo" 
+                <Image
+                  src="/logo2.svg"
+                  alt="MedHubb Logo"
+                  width={40}
+                  height={40}
                   className="w-full h-full"
                 />
               </div>

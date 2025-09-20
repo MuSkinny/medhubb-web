@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,15 +64,64 @@ export default function DoctorDashboardPage() {
   // Stati per le sezioni SPA
   const [appointments, setAppointments] = useState<any[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [filteredPrescriptions, setFilteredPrescriptions] = useState<any[]>([]);
   const [doctorPatients, setDoctorPatients] = useState<any[]>([]);
   const [offices, setOffices] = useState<any[]>([]);
   const [loadingSections, setLoadingSections] = useState<{[key: string]: boolean}>({});
+  const [prescriptionFilters, setPrescriptionFilters] = useState({
+    patient: 'all',
+    status: 'all',
+    period: 'all'
+  });
   
   const router = useRouter();
 
   useEffect(() => {
     checkDoctorAuth();
   }, []);
+
+  // Effetto per filtrare le prescrizioni quando cambiano i filtri
+  useEffect(() => {
+    applyPrescriptionFilters();
+  }, [prescriptions, prescriptionFilters]);
+
+  const applyPrescriptionFilters = () => {
+    let filtered = [...prescriptions];
+
+    // Filtro per paziente
+    if (prescriptionFilters.patient !== 'all') {
+      filtered = filtered.filter((p: any) => p.patient_id === prescriptionFilters.patient);
+    }
+
+    // Filtro per status
+    if (prescriptionFilters.status !== 'all') {
+      filtered = filtered.filter((p: any) => p.status === prescriptionFilters.status);
+    }
+
+    // Filtro per periodo
+    if (prescriptionFilters.period !== 'all') {
+      const now = new Date();
+      const filterDate = new Date();
+
+      switch (prescriptionFilters.period) {
+        case 'today':
+          filterDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          filterDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+      }
+
+      filtered = filtered.filter((p: any) =>
+        new Date(p.created_at) >= filterDate
+      );
+    }
+
+    setFilteredPrescriptions(filtered);
+  };
 
   const checkDoctorAuth = async () => {
     try {
@@ -449,9 +499,11 @@ Vuoi copiare il link negli appunti?`)) {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10">
-                <img 
-                  src="/logo2.svg" 
-                  alt="MedHubb Logo" 
+                <Image
+                  src="/logo2.svg"
+                  alt="MedHubb Logo"
+                  width={40}
+                  height={40}
                   className="w-full h-full"
                 />
               </div>
@@ -790,10 +842,86 @@ Vuoi copiare il link negli appunti?`)) {
         {/* Prescriptions Tab */}
         {activeTab === 'prescriptions' && (
           <div className="space-y-6">
+            {/* Filtri */}
             <Card className="medical-surface-elevated">
               <CardHeader>
-                <CardTitle className="medical-subtitle text-slate-800">Richieste Ricette</CardTitle>
-                <CardDescription>Gestisci le richieste ricette dai pazienti</CardDescription>
+                <CardTitle className="medical-subtitle text-slate-800">Filtri Ricette</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Paziente
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={prescriptionFilters.patient}
+                      onChange={(e) => setPrescriptionFilters({ ...prescriptionFilters, patient: e.target.value })}
+                    >
+                      <option value="all">Tutti i pazienti</option>
+                      {doctorPatients.map((patient: any) => (
+                        <option key={patient.patient_id} value={patient.patient_id}>
+                          {patient.first_name} {patient.last_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={prescriptionFilters.status}
+                      onChange={(e) => setPrescriptionFilters({ ...prescriptionFilters, status: e.target.value })}
+                    >
+                      <option value="all">Tutti</option>
+                      <option value="pending">In Attesa</option>
+                      <option value="approved">Approvate</option>
+                      <option value="rejected">Rifiutate</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Periodo
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={prescriptionFilters.period}
+                      onChange={(e) => setPrescriptionFilters({ ...prescriptionFilters, period: e.target.value })}
+                    >
+                      <option value="all">Tutto</option>
+                      <option value="today">Oggi</option>
+                      <option value="week">Questa settimana</option>
+                      <option value="month">Questo mese</option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="medical-surface-elevated">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div>
+                  <CardTitle className="medical-subtitle text-slate-800">Tutte le Ricette</CardTitle>
+                  <CardDescription>
+                    Gestisci tutte le prescrizioni dei tuoi pazienti
+                    {filteredPrescriptions.length !== prescriptions.length && (
+                      <span className="ml-2 text-blue-600">
+                        ({filteredPrescriptions.length} di {prescriptions.length} ricette)
+                      </span>
+                    )}
+                  </CardDescription>
+                </div>
+                {prescriptionFilters.patient !== 'all' || prescriptionFilters.status !== 'all' || prescriptionFilters.period !== 'all' ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPrescriptionFilters({ patient: 'all', status: 'all', period: 'all' })}
+                  >
+                    Reset Filtri
+                  </Button>
+                ) : null}
               </CardHeader>
               <CardContent>
                 {loadingSections.prescriptions ? (
@@ -801,54 +929,141 @@ Vuoi copiare il link negli appunti?`)) {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                     <p className="text-gray-600">Caricamento prescrizioni...</p>
                   </div>
-                ) : prescriptions.length === 0 ? (
+                ) : filteredPrescriptions.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Pill className="h-8 w-8 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna richiesta ricetta</h3>
-                    <p className="text-gray-600">Non ci sono richieste di prescrizioni</p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna ricetta trovata</h3>
+                    <p className="text-gray-600">
+                      {prescriptions.length === 0
+                        ? "Non ci sono prescrizioni"
+                        : "Nessuna ricetta corrisponde ai filtri selezionati"
+                      }
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {prescriptions.map((prescription: any) => (
-                      <div key={prescription.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-gray-900">
-                              {prescription.patients?.first_name} {prescription.patients?.last_name}
-                            </h3>
-                            <div className="text-sm text-gray-600">
-                              {prescription.prescription_items?.map((item: any, index: number) => (
-                                <div key={index} className="mt-1">
-                                  <span className="font-medium">{item.medication_name}</span>
-                                  {item.dosage && <span> - {item.dosage}</span>}
-                                  {item.quantity && <span> ({item.quantity})</span>}
-                                </div>
-                              ))}
+                    {filteredPrescriptions.map((prescription: any) => (
+                      <div key={prescription.id} className="border rounded-lg p-6 hover:shadow-md transition-shadow bg-white">
+                        <div className="flex flex-col space-y-4">
+                          {/* Header con paziente e data */}
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <Pill className="h-6 w-6 text-green-600" />
+                              </div>
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                  {prescription.patients?.first_name} {prescription.patients?.last_name}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  Richiesta il {new Date(prescription.created_at).toLocaleDateString('it-IT', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
                             </div>
-                            {prescription.patient_notes && (
-                              <p className="text-sm text-gray-700 mt-2">{prescription.patient_notes}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              prescription.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              prescription.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {prescription.status === 'approved' ? 'Approvato' :
-                               prescription.status === 'pending' ? 'In Attesa' :
-                               prescription.status === 'rejected' ? 'Rifiutato' :
-                               prescription.status}
-                            </span>
-                            {prescription.urgency === 'urgent' && (
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                Urgente
+                            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                prescription.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                prescription.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {prescription.status === 'approved' ? 'Approvato' :
+                                 prescription.status === 'pending' ? 'In Attesa' :
+                                 prescription.status === 'rejected' ? 'Rifiutato' :
+                                 prescription.status}
                               </span>
-                            )}
+                              {prescription.urgency === 'urgent' && (
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                  Urgente
+                                </span>
+                              )}
+                            </div>
                           </div>
+
+                          {/* Farmaci richiesti */}
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <h4 className="font-medium text-gray-900 mb-3">Farmaci richiesti:</h4>
+                            <div className="grid gap-3">
+                              {prescription.prescription_items?.map((item: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between bg-white rounded-lg p-3 border">
+                                  <div>
+                                    <span className="font-medium text-gray-900">{item.medication_name}</span>
+                                    {item.dosage && <span className="text-gray-600 ml-2">• {item.dosage}</span>}
+                                  </div>
+                                  {item.quantity && (
+                                    <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                      Qtà: {item.quantity}
+                                    </span>
+                                  )}
+                                </div>
+                              )) || (
+                                <p className="text-gray-500 italic">Nessun farmaco specificato</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Note del paziente */}
+                          {prescription.patient_notes && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <h4 className="font-medium text-blue-900 mb-2">Note del paziente:</h4>
+                              <p className="text-blue-700 text-sm">{prescription.patient_notes}</p>
+                            </div>
+                          )}
+
+                          {/* Azioni per prescrizioni in attesa */}
+                          {prescription.status === 'pending' && (
+                            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+                              <Button
+                                className="medical-btn-success flex-1"
+                                onClick={() => {
+                                  // TODO: Implementare approvazione
+                                  console.log('Approving prescription:', prescription.id);
+                                }}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Approva Ricetta
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="flex-1 border-red-300 text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                  // TODO: Implementare rifiuto
+                                  console.log('Rejecting prescription:', prescription.id);
+                                }}
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Rifiuta
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="sm:w-auto"
+                                onClick={() => router.push(`/dashboard/doctor/patients/${prescription.patient_id}`)}
+                              >
+                                Vai al Profilo
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* Azioni per prescrizioni approvate/rifiutate */}
+                          {prescription.status !== 'pending' && (
+                            <div className="flex justify-end pt-4 border-t">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => router.push(`/dashboard/doctor/patients/${prescription.patient_id}`)}
+                              >
+                                Vai al Profilo Paziente
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -896,6 +1111,16 @@ Vuoi copiare il link negli appunti?`)) {
                             </p>
                           </div>
                           <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                console.log('Navigating to patient profile with patient data:', patient);
+                                router.push(`/dashboard/doctor/patients/${patient.patient_id}`);
+                              }}
+                            >
+                              Profilo
+                            </Button>
                             <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                               Attivo
                             </span>

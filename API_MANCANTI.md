@@ -104,40 +104,38 @@ Questo documento elenca le API che devono essere implementate per completare le 
 
 ## 👥 API per Gestione Pazienti Avanzata (Priorità Media)
 
-### `/api/patients/history`
-**Status**: ❌ Non implementata
-**Descrizione**: Storico completo paziente per il modal PatientProfileModal
+### `/api/patients/profile`
+**Status**: ✅ IMPLEMENTATA E TESTATA
+**Descrizione**: API completa per profilo paziente con storico medico
 
 ```typescript
-// GET /api/patients/history?patientId={id}&doctorId={id}
+// GET /api/patients/profile?patientId={id}&doctorId={id}
 {
   success: true,
   patient: {
     id: string,
-    nome: string,
-    cognome: string,
+    first_name: string,
+    last_name: string,
     email: string,
-    telefono?: string,
-    data_nascita?: string,
-    codice_fiscale?: string,
-    indirizzo?: string,
-    citta?: string,
-    cap?: string,
+    phone?: string,
+    date_of_birth?: string,
     created_at: string
   },
-  appointments: Appointment[],
-  prescriptions: Prescription[]
+  appointments: Appointment[], // Storico appuntamenti
+  prescriptions: Prescription[], // Storico prescrizioni
+  connectionDate: string // Data collegamento doctor-patient
 }
 ```
 
-### `/api/patients/profile`
-**Status**: ❌ Non implementata
-**Descrizione**: Gestione profili pazienti dettagliati
+**Features Implementate:**
+- ✅ Autenticazione con Bearer token
+- ✅ Autorizzazione tramite vista `doctor_active_patients`
+- ✅ Accesso sicuro con RLS policies
+- ✅ Dati paziente completi con storico medico
+- ✅ Filtro per doctor-patient specifico
+- ✅ Error handling completo
 
-```typescript
-// GET /api/patients/profile?patientId={id}
-// PUT /api/patients/profile/{id}
-```
+**File**: `src/app/api/patients/profile/route.ts`
 
 ## 📊 API per Dashboard Analytics (Priorità Bassa)
 
@@ -264,20 +262,26 @@ CREATE POLICY "Doctors can manage schedules for their offices" ON doctor_office_
 
 ## 📝 Priorità di Implementazione
 
+### ✅ Completate Recentemente
+1. **✅ API Gestione Pazienti** (`/api/patients/profile`) - Profilo completo con storico
+2. **✅ Dashboard UI Moderna** - Card-based design con filtri avanzati
+3. **✅ Sistema Prescrizioni Completo** - Workflow end-to-end
+4. **✅ Patient Profile Pages** - Pagine dinamiche con routing
+
 ### Fase 1 (Subito) - Funzionalità Base Mancanti
 1. **API Ambulatori** (`/api/offices`) - Necessaria per prenotazioni
 2. **Miglioramenti API Appuntamenti** - Office_id e endpoint mancanti
 3. **Database migrations** - Tabelle ambulatori
 
 ### Fase 2 (Prossima settimana) - Esperienza Utente
-1. **API Storico Pazienti** (`/api/patients/history`) - Per modal profilo
-2. **API Dashboard Stats** - Statistiche vere nelle card overview
-3. **Endpoint conferma/cancella appuntamenti**
+1. **API Dashboard Stats** - Statistiche vere nelle card overview
+2. **Endpoint conferma/cancella appuntamenti**
+3. **Sistema gestione orari ambulatori**
 
 ### Fase 3 (Futuro) - Features Avanzate
 1. **API Notifiche** - Sistema notifiche push
-2. **API Gestione Profili** - Profili pazienti dettagliati
-3. **Analytics avanzate** - Report e statistiche
+2. **Analytics avanzate** - Report e statistiche
+3. **Export dati** - PDF e Excel per prescrizioni
 
 ## 🔍 Note per l'Implementazione
 

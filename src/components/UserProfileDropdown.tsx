@@ -121,18 +121,6 @@ export function UserProfileDropdown({
               </div>
             </button>
 
-            <button
-              onClick={() => router.push('/calendar')}
-              className="w-full flex items-center space-x-3 px-4 py-3 text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200"
-            >
-              <div className="p-1.5 bg-slate-100 rounded-lg">
-                <User className="w-4 h-4 text-slate-600" />
-              </div>
-              <div>
-                <span className="text-sm font-medium">Calendario</span>
-                <p className="text-xs text-slate-500">Visualizza appuntamenti</p>
-              </div>
-            </button>
           </div>
 
           {/* Separator */}

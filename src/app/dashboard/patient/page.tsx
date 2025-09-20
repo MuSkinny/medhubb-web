@@ -37,8 +37,14 @@ export default function PatientDashboardPage() {
   // Stati per le sezioni SPA
   const [appointments, setAppointments] = useState<any[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
+  const [filteredPrescriptions, setFilteredPrescriptions] = useState<any[]>([]);
   const [connectedDoctors, setConnectedDoctors] = useState<any[]>([]);
   const [loadingSections, setLoadingSections] = useState<{[key: string]: boolean}>({});
+  const [prescriptionFilters, setPrescriptionFilters] = useState({
+    doctor: 'all',
+    status: 'all',
+    period: 'all'
+  });
   
   // Stati per modals e forms
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -76,6 +82,49 @@ export default function PatientDashboardPage() {
         break;
     }
   }, [activeTab, patientData]);
+
+  // Effetto per filtrare le prescrizioni quando cambiano i filtri
+  useEffect(() => {
+    applyPrescriptionFilters();
+  }, [prescriptions, prescriptionFilters]);
+
+  const applyPrescriptionFilters = () => {
+    let filtered = [...prescriptions];
+
+    // Filtro per dottore
+    if (prescriptionFilters.doctor !== 'all') {
+      filtered = filtered.filter((p: any) => p.doctor_id === prescriptionFilters.doctor);
+    }
+
+    // Filtro per status
+    if (prescriptionFilters.status !== 'all') {
+      filtered = filtered.filter((p: any) => p.status === prescriptionFilters.status);
+    }
+
+    // Filtro per periodo
+    if (prescriptionFilters.period !== 'all') {
+      const now = new Date();
+      const filterDate = new Date();
+
+      switch (prescriptionFilters.period) {
+        case 'today':
+          filterDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          filterDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+      }
+
+      filtered = filtered.filter((p: any) =>
+        new Date(p.created_at) >= filterDate
+      );
+    }
+
+    setFilteredPrescriptions(filtered);
+  };
 
   useEffect(() => {
     checkPatientAuth();
@@ -712,33 +761,109 @@ export default function PatientDashboardPage() {
 
         {/* Prescriptions Tab */}
         {activeTab === 'prescriptions' && (
-          <Card className="card-responsive">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-              <div>
-                <CardTitle>Le mie ricette</CardTitle>
-                <CardDescription>Visualizza e gestisci le tue ricette mediche</CardDescription>
-              </div>
-              <Dialog open={showPrescriptionModal} onOpenChange={setShowPrescriptionModal}>
-                <DialogTrigger asChild>
-                  <Button
-                    disabled={connectedDoctors.length === 0}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Richiedi Ricetta
-                  </Button>
-                </DialogTrigger>
+          <div className="space-y-6">
+            {/* Filtri */}
+            <Card className="card-responsive">
+              <CardHeader>
+                <CardTitle>Filtri Ricette</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Medico
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={prescriptionFilters.doctor}
+                      onChange={(e) => setPrescriptionFilters({ ...prescriptionFilters, doctor: e.target.value })}
+                    >
+                      <option value="all">Tutti i medici</option>
+                      {connectedDoctors.map((doctor: any) => (
+                        <option key={doctor.id} value={doctor.id}>
+                          Dr. {doctor.first_name} {doctor.last_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={prescriptionFilters.status}
+                      onChange={(e) => setPrescriptionFilters({ ...prescriptionFilters, status: e.target.value })}
+                    >
+                      <option value="all">Tutti</option>
+                      <option value="pending">In Attesa</option>
+                      <option value="approved">Approvate</option>
+                      <option value="rejected">Rifiutate</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Periodo
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      value={prescriptionFilters.period}
+                      onChange={(e) => setPrescriptionFilters({ ...prescriptionFilters, period: e.target.value })}
+                    >
+                      <option value="all">Tutto</option>
+                      <option value="today">Oggi</option>
+                      <option value="week">Questa settimana</option>
+                      <option value="month">Questo mese</option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-responsive">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                <div>
+                  <CardTitle>Le mie ricette</CardTitle>
+                  <CardDescription>
+                    Visualizza e gestisci le tue ricette mediche
+                    {filteredPrescriptions.length !== prescriptions.length && (
+                      <span className="ml-2 text-blue-600">
+                        ({filteredPrescriptions.length} di {prescriptions.length} ricette)
+                      </span>
+                    )}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {(prescriptionFilters.doctor !== 'all' || prescriptionFilters.status !== 'all' || prescriptionFilters.period !== 'all') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPrescriptionFilters({ doctor: 'all', status: 'all', period: 'all' })}
+                    >
+                      Reset Filtri
+                    </Button>
+                  )}
+                  <Dialog open={showPrescriptionModal} onOpenChange={setShowPrescriptionModal}>
+                    <DialogTrigger asChild>
+                      <Button
+                        disabled={connectedDoctors.length === 0}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Richiedi Ricetta
+                      </Button>
+                    </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
                       <DialogHeader>
                         <DialogTitle>Richiedi Ricetta</DialogTitle>
                       </DialogHeader>
-                      
+
                       <form onSubmit={handleSubmitPrescription} className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Medico
                           </label>
-                          <Select 
-                            value={prescriptionForm.doctorId} 
+                          <Select
+                            value={prescriptionForm.doctorId}
                             onValueChange={(value) => setPrescriptionForm({ ...prescriptionForm, doctorId: value })}
                           >
                             <SelectTrigger>
@@ -758,8 +883,8 @@ export default function PatientDashboardPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Urgenza
                           </label>
-                          <Select 
-                            value={prescriptionForm.urgency} 
+                          <Select
+                            value={prescriptionForm.urgency}
                             onValueChange={(value) => setPrescriptionForm({ ...prescriptionForm, urgency: value })}
                           >
                             <SelectTrigger>
@@ -818,9 +943,9 @@ export default function PatientDashboardPage() {
                               type="button"
                               variant="outline"
                               onClick={addMedication}
-                              className="w-full"
+                              className="w-full border-green-300 text-green-700 hover:bg-green-50"
                             >
-                              <Plus className="h-4 w-4 mr-1" />
+                              <Plus className="h-4 w-4 mr-2" />
                               Aggiungi Farmaco
                             </Button>
                           </div>
@@ -828,17 +953,17 @@ export default function PatientDashboardPage() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Note aggiuntive (opzionale)
+                            Note Aggiuntive
                           </label>
                           <Textarea
+                            placeholder="Fornisci informazioni aggiuntive che possono aiutare il medico..."
                             value={prescriptionForm.patientNotes}
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrescriptionForm({ ...prescriptionForm, patientNotes: e.target.value })}
-                            rows={3}
-                            placeholder="Aggiungi informazioni aggiuntive..."
+                            className="min-h-[80px]"
                           />
                         </div>
 
-                        <div className="flex space-x-3 pt-4">
+                        <div className="flex space-x-4 pt-4">
                           <Button
                             type="button"
                             variant="outline"
@@ -857,8 +982,9 @@ export default function PatientDashboardPage() {
                       </form>
                     </DialogContent>
                   </Dialog>
-                </CardHeader>
-                <CardContent>
+                </div>
+              </CardHeader>
+              <CardContent>
                   {connectedDoctors.length === 0 && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
                       <div className="flex">
@@ -879,51 +1005,143 @@ export default function PatientDashboardPage() {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                         <p className="text-gray-600">Caricamento prescrizioni...</p>
                       </div>
-                    ) : prescriptions.length === 0 ? (
+                    ) : filteredPrescriptions.length === 0 ? (
                       <div className="text-center py-12">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                           <Pill className="h-8 w-8 text-gray-400" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna richiesta ricetta</h3>
-                        <p className="text-gray-600 mb-4">Non hai ancora fatto richieste per ricette.</p>
-                        {connectedDoctors.length > 0 && (
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Nessuna ricetta trovata</h3>
+                        <p className="text-gray-600 mb-4">
+                          {prescriptions.length === 0
+                            ? "Non hai ancora fatto richieste per ricette."
+                            : "Nessuna ricetta corrisponde ai filtri selezionati."
+                          }
+                        </p>
+                        {connectedDoctors.length > 0 && prescriptions.length === 0 && (
                           <Button onClick={() => setShowPrescriptionModal(true)}>
                             Crea la tua prima richiesta
                           </Button>
                         )}
                       </div>
                     ) : (
-                      prescriptions.map((prescription: any) => (
-                        <div key={prescription.id} className="border rounded-lg p-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium truncate">
-                                {prescription.prescription_items?.[0]?.medication_name || 'Farmaco'}
-                              </h3>
-                              <p className="text-sm text-gray-600">Dr. {prescription.doctors?.first_name} {prescription.doctors?.last_name}</p>
-                              <p className="text-sm text-gray-600">{new Date(prescription.created_at || '').toLocaleDateString('it-IT')}</p>
+                      <div className="space-y-6">
+                        {filteredPrescriptions.map((prescription: any) => (
+                          <div key={prescription.id} className="border rounded-lg p-6 hover:shadow-md transition-shadow bg-white">
+                            <div className="flex flex-col space-y-4">
+                              {/* Header con dottore e data */}
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <Pill className="h-6 w-6 text-blue-600" />
+                                  </div>
+                                  <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                      Dr. {prescription.doctors?.first_name} {prescription.doctors?.last_name}
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                      Richiesta il {new Date(prescription.created_at || '').toLocaleDateString('it-IT', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2 mt-2 sm:mt-0">
+                                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                    prescription.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                    prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    prescription.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {prescription.status === 'approved' ? 'Approvata' :
+                                     prescription.status === 'pending' ? 'In Attesa' :
+                                     prescription.status === 'rejected' ? 'Rifiutata' :
+                                     prescription.status}
+                                  </span>
+                                  {prescription.urgency === 'urgent' && (
+                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                      Urgente
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Farmaci richiesti */}
+                              {prescription.prescription_items && prescription.prescription_items.length > 0 && (
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                  <h4 className="font-medium text-gray-900 mb-3">Farmaci richiesti:</h4>
+                                  <div className="grid gap-3">
+                                    {prescription.prescription_items.map((item: any, index: number) => (
+                                      <div key={index} className="flex items-center justify-between bg-white rounded-lg p-3 border">
+                                        <div>
+                                          <span className="font-medium text-gray-900">{item.medication_name}</span>
+                                          {item.dosage && <span className="text-gray-600 ml-2">• {item.dosage}</span>}
+                                          {item.patient_reason && <span className="text-gray-500 ml-2">({item.patient_reason})</span>}
+                                        </div>
+                                        {item.quantity && (
+                                          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                            Qtà: {item.quantity}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Note del paziente */}
                               {prescription.patient_notes && (
-                                <p className="text-sm text-gray-700 mt-1 break-words">{prescription.patient_notes}</p>
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                  <h4 className="font-medium text-blue-900 mb-2">Le tue note:</h4>
+                                  <p className="text-blue-700 text-sm">{prescription.patient_notes}</p>
+                                </div>
+                              )}
+
+                              {/* Note del dottore (se rifiutata) */}
+                              {prescription.doctor_notes && prescription.status === 'rejected' && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                  <h4 className="font-medium text-red-900 mb-2">Note del medico:</h4>
+                                  <p className="text-red-700 text-sm">{prescription.doctor_notes}</p>
+                                </div>
+                              )}
+
+                              {/* Azioni */}
+                              {prescription.status === 'approved' && (
+                                <div className="flex justify-end pt-4 border-t">
+                                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                    <p className="text-green-800 text-sm font-medium">
+                                      ✅ Ricetta approvata! Puoi recarti in farmacia con questo codice.
+                                    </p>
+                                    {prescription.prescription_code && (
+                                      <p className="text-green-700 text-sm mt-1 font-mono">
+                                        Codice: {prescription.prescription_code}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {prescription.status === 'pending' && (
+                                <div className="flex justify-center pt-4 border-t">
+                                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <p className="text-yellow-800 text-sm">
+                                      ⏳ La richiesta è in attesa di approvazione dal medico
+                                    </p>
+                                  </div>
+                                </div>
                               )}
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${
-                              prescription.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              prescription.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              prescription.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {prescription.status === 'approved' ? 'Approvato' :
-                               prescription.status === 'pending' ? 'In attesa' :
-                               prescription.status === 'rejected' ? 'Rifiutato' :
-                               prescription.status}
-                            </span>
                           </div>
-                        </div>
-                      ))
+                        ))}
+                      </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
+            </div>
         )}
 
         {/* Doctors Tab */}

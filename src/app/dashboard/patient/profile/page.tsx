@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,11 +47,7 @@ export default function PatientProfilePage() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkPatientAuth();
-  }, []);
-
-  const checkPatientAuth = async () => {
+  const checkPatientAuth = useCallback(async () => {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -112,15 +109,12 @@ export default function PatientProfilePage() {
     } catch (error) {
       console.error("Errore controllo collegamento:", error);
     }
-  };
+  }, [router]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('it-IT', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  useEffect(() => {
+    checkPatientAuth();
+  }, [checkPatientAuth]);
+
 
   if (loading) {
     return (
@@ -156,9 +150,11 @@ export default function PatientProfilePage() {
             </Button>
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10">
-                <img 
-                  src="/logo2.svg" 
-                  alt="MedHubb Logo" 
+                <Image
+                  src="/logo2.svg"
+                  alt="MedHubb Logo"
+                  width={40}
+                  height={40}
                   className="w-full h-full"
                 />
               </div>

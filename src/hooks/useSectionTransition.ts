@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface SectionTransitionOptions {
   minLoadingTime?: number; // Tempo minimo di caricamento in ms

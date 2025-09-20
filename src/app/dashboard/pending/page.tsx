@@ -12,7 +12,7 @@ export default function PendingApprovalPage() {
 
   useEffect(() => {
     checkDoctorStatus();
-  }, []);
+  }, [checkDoctorStatus]);
 
   const checkDoctorStatus = async () => {
     try {
